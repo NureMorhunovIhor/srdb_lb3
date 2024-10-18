@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Reviews List</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+</head>
+<body>
+<h1>Reviews</h1>
+<div class="table-container">
+<table>
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Rating</th>
+    <th>Comment</th>
+    <th>Driver</th>
+    <th>Passenger</th>
+    <th>Price</th>
+    <th>Address From - Address To</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="review : ${reviews}">
+    <td th:text="${review.id}"></td>
+    <td th:text="${review.rating}"></td>
+    <td th:text="${review.comment}"></td>
+    <td th:text="${review.order.driver.firstName} + ' ' + ${review.order.driver.lastName}"></td>
+    <td th:text="${review.order.passenger.firstName} + ' ' + ${review.order.passenger.lastName}"></td>
+    <td th:text="${review.order.price}"></td>
+    <td th:text="${review.order.adressFrom} + ' ' + ${review.order.adressTo}"></td>
+    <td>
+      <a th:href="@{/reviews/edit/{id}(id=${review.id})}">Edit</a>
+      <a th:href="@{/reviews/delete/{id}(id=${review.id})}">Delete</a>
+    </td>
+  </tr>
+  </tbody>
+</table>
+</div>
+<a href="/reviews/add">Add Review</a>
+</body>
+</html>

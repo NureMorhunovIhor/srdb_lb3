@@ -1,0 +1,36 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+.table-container {
+    max-height: 300px; /* Задайте желаемую максимальную высоту */
+    overflow-y: auto;  /* Включите вертикальную прокрутку */
+    border: 1px solid #ddd; /* Добавьте рамку вокруг контейнера */
+    margin-bottom: 20px; /* Отступ снизу */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
