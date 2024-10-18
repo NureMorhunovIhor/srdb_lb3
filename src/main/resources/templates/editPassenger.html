@@ -22,6 +22,15 @@
     <label for="email">Email:</label>
     <input type="email" id="email" name="email" th:value="${passenger.email}" required><br>
 
+    <label for="birthDate">Birth Date:</label>
+    <input type="date" id="birthDate" name="birthDate" th:value="${passenger.birthDate}" required><br>
+
+    <label for="gender">Gender:</label>
+    <select id="gender" name="gender" required>
+        <option value="MALE" th:selected="${passenger.gender == 'MALE'}">Male</option>
+        <option value="FEMALE" th:selected="${passenger.gender == 'FEMALE'}">Female</option>
+    </select><br>
+
     <button type="submit">Update Passenger</button>
 </form>
 </body>

@@ -52,8 +52,12 @@ public class PassengerController {
     // Обновить существующего пассажира
     @PostMapping("/edit")
     public String updatePassenger(@ModelAttribute Passenger passenger) {
-        passengerRepository.save(passenger);
-        return "redirect:/passengers"; // перенаправление на страницу списка пассажиров
+        if (passengerRepository.existsById(passenger.getId())) {
+            passengerRepository.save(passenger);
+            return "redirect:/passengers";
+        } else {
+            return "redirect:/passengers?error=PassengerNotFound";
+        }
     }
 
     // Удалить пассажира
