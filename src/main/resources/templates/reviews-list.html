@@ -3,40 +3,161 @@
 <head>
   <title>Reviews List</title>
   <link rel="stylesheet" href="/css/styles.css"/>
+  <style>
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0,0,0);
+      background-color: rgba(0,0,0,0.4);
+      padding-top: 60px;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 <h1>Reviews</h1>
 <div class="table-container">
-<table>
-  <thead>
-  <tr>
-    <th>ID</th>
-    <th>Rating</th>
-    <th>Comment</th>
-    <th>Driver</th>
-    <th>Passenger</th>
-    <th>Price</th>
-    <th>Address From - Address To</th>
-    <th>Actions</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr th:each="review : ${reviews}">
-    <td th:text="${review.id}"></td>
-    <td th:text="${review.rating}"></td>
-    <td th:text="${review.comment}"></td>
-    <td th:text="${review.order.driver.firstName} + ' ' + ${review.order.driver.lastName}"></td>
-    <td th:text="${review.order.passenger.firstName} + ' ' + ${review.order.passenger.lastName}"></td>
-    <td th:text="${review.order.price}"></td>
-    <td th:text="${review.order.adressFrom} + ' ' + ${review.order.adressTo}"></td>
-    <td>
-      <a th:href="@{/reviews/edit/{id}(id=${review.id})}">Edit</a>
-      <a th:href="@{/reviews/delete/{id}(id=${review.id})}">Delete</a>
-    </td>
-  </tr>
-  </tbody>
-</table>
+  <table>
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Rating</th>
+      <th>Comment</th>
+      <th>Driver</th>
+      <th>Passenger</th>
+      <th>Price</th>
+      <th>Address From - Address To</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="review : ${reviews}">
+      <td th:text="${review.id}"></td>
+      <td th:text="${review.rating}"></td>
+      <td th:text="${review.comment}"></td>
+      <td>
+        <span th:if="${review.order != null}" th:text="${review.order.driver.firstName} + ' ' + ${review.order.driver.lastName}"></span>
+        <span th:if="${review.order == null}">Неизвестный водитель</span>
+      </td>
+      <td>
+        <span th:if="${review.order != null}" th:text="${review.order.passenger.firstName} + ' ' + ${review.order.passenger.lastName}"></span>
+        <span th:if="${review.order == null}">Неизвестный пассажир</span>
+      </td>
+      <td th:text="${review.order.price}"></td>
+      <td th:text="${review.order.adressFrom} + ' ' + ${review.order.adressTo}"></td>
+      <td>
+        <a href="#" th:onclick="'openModal(' + ${review.id} + '); return false;'">Edit</a>
+        <a th:href="@{/reviews/delete/{id}(id=${review.id})}">Delete</a>
+      </td>
+    </tr>
+    </tbody>
+
+  </table>
 </div>
-<a href="/reviews/add">Add Review</a>
+<button id="addReviewBtn">Add Review</button>
+
+<!-- Модальное окно для добавления/редактирования отзыва -->
+<div id="reviewModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2 id="modalTitle">Add Review</h2>
+    <form id="reviewForm" action="/reviews/add" method="post">
+      <input type="hidden" id="reviewId" name="id"/>
+
+      <label for="rating">Rating:</label>
+      <input type="number" id="rating" name="rating" min="1" max="5" required><br>
+
+      <label for="comment">Comment:</label>
+      <textarea id="comment" name="comment" required></textarea><br>
+
+      <label for="orderId">Order:</label>
+      <select id="orderId" name="orderId" required>
+        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${order.id}"></option>
+      </select><br>
+
+      <button type="submit">Save Review</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  var modal = document.getElementById("reviewModal");
+  var btn = document.getElementById("addReviewBtn");
+  var span = document.getElementsByClassName("close")[0];
+
+  btn.onclick = function() {
+    clearForm(); // Очистка формы перед открытием
+    document.getElementById("modalTitle").innerText = "Add Review"; // Заголовок
+    modal.style.display = "block"; // Показываем модальное окно
+  }
+
+  span.onclick = function() {
+    modal.style.display = "none";
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+
+  function openModal(id) {
+    fetch(`/reviews/edit/${id}`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json();
+            })
+            .then(review => {
+              // Заполняем форму данными отзыва
+              document.getElementById("reviewId").value = review.id;
+              document.getElementById("rating").value = review.rating;
+              document.getElementById("comment").value = review.comment;
+              document.getElementById("orderId").value = review.order.id; // Предполагается, что у отзыва есть связь с заказом
+
+              document.getElementById("modalTitle").innerText = "Edit Review";
+              modal.style.display = "block"; // Показываем модальное окно
+            })
+            .catch(error => {
+              console.error('Error fetching review:', error); // Обработка ошибок
+            });
+  }
+
+  function clearForm() {
+    document.getElementById("reviewId").value = "";
+    document.getElementById("rating").value = "";
+    document.getElementById("comment").value = "";
+    document.getElementById("orderId").value = ""; // Убираем выбор
+  }
+</script>
 </body>
 </html>

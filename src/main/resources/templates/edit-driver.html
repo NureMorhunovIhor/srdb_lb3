@@ -6,7 +6,8 @@
 <body>
 <h1>Edit Driver</h1>
 
-<form th:action="@{/drivers/update/{id}(id=${driver.id})}" th:object="${driver}" method="post">
+<form th:action="@{/drivers/save}" th:object="${driver}" method="post">
+  <input type="hidden" th:field="*{id}" />
 
   <label for="firstName">First Name:</label>
   <input type="text" id="firstName" name="firstName" th:field="*{firstName}" />

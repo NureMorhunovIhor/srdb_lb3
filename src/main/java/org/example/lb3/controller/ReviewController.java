@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,40 +29,51 @@ public class ReviewController {
     @GetMapping
     public String getReviews(Model model) {
         List<Review> reviews = (List<Review>) reviewRepository.findAll();
+        List<Order> orders = (List<Order>) orderRepository.findAll();
         model.addAttribute("reviews", reviews);
-        return "reviews-list"; // имя шаблона
+        model.addAttribute("orders", orders);
+        return "reviews-list";
     }
+
 
     @GetMapping("/add")
     public String addReviewForm(Model model) {
         model.addAttribute("review", new Review());
         model.addAttribute("orders", orderRepository.findAll());
-        return "review-form"; // шаблон для добавления отзыва
+        return "review-form";
     }
 
     @PostMapping("/add")
-    public String addReview(@ModelAttribute Review review) {
+    public String addReview(@ModelAttribute Review review, @RequestParam Integer orderId) {
+        Optional<Order> order = orderRepository.findById(orderId);
+        if (order.isPresent()) {
+            review.setOrder(order.get());
+            review.setCreationDatetime(LocalDateTime.now()); // Устанавливаем текущее время
+        } else {
+        }
         reviewRepository.save(review);
         return "redirect:/reviews";
     }
 
+
+
     @GetMapping("/edit/{id}")
-    public String editReviewForm(@PathVariable Integer id, Model model) {
-        Optional<Review> review = reviewRepository.findById(id);
-        if (review.isPresent()) {
-            model.addAttribute("review", review.get());
-            model.addAttribute("orders", orderRepository.findAll());
-            return "review-form";
-        }
-        return "redirect:/reviews";
+    @ResponseBody // Возвращаем объект в формате JSON
+    public Review getReviewJson(@PathVariable Integer id) {
+        return reviewRepository.findById(id).orElse(null);
     }
 
     @PostMapping("/edit/{id}")
     public String editReview(@PathVariable Integer id, @ModelAttribute Review review) {
-        review.setId(id);
-        reviewRepository.save(review);
+        Review existingReview = reviewRepository.findById(id).orElse(null);
+        if (existingReview != null) {
+            review.setCreationDatetime(LocalDateTime.now()); // Устанавливаем текущую дату и время
+            review.setId(id);
+            reviewRepository.save(review);
+        }
         return "redirect:/reviews";
     }
+
 
     @GetMapping("/delete/{id}")
     public String deleteReview(@PathVariable Integer id) {

@@ -3,6 +3,7 @@ package org.example.lb3.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Nationalized;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -37,17 +38,17 @@ public class Driver {
     private Double rating;
 
     @Column(name = "Driving_expirience", nullable = false)
-    private LocalDate drivingExpirience;
+    private Date drivingExpirience;
 
     @Column(name = "Registration_date", nullable = false)
-    private LocalDate registrationDate;
+    private Date registrationDate;
 
     @Nationalized
     @Column(name = "Email", length = 50)
     private String email;
 
     @Column(name = "Birth_date", nullable = false)
-    private LocalDate birthDate;
+    private Date birthDate;
 
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Order> orders;
@@ -116,19 +117,19 @@ public class Driver {
         this.rating = rating;
     }
 
-    public LocalDate getDrivingExpirience() {
+    public Date getDrivingExpirience() {
         return drivingExpirience;
     }
 
-    public void setDrivingExpirience(LocalDate drivingExpirience) {
+    public void setDrivingExpirience(Date drivingExpirience) {
         this.drivingExpirience = drivingExpirience;
     }
 
-    public LocalDate getRegistrationDate() {
+    public Date getRegistrationDate() {
         return registrationDate;
     }
 
-    public void setRegistrationDate(LocalDate registrationDate) {
+    public void setRegistrationDate(Date registrationDate) {
         this.registrationDate = registrationDate;
     }
 
@@ -140,11 +141,11 @@ public class Driver {
         this.email = email;
     }
 
-    public LocalDate getBirthDate() {
+    public Date getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(LocalDate birthDate) {
+    public void setBirthDate(Date birthDate) {
         this.birthDate = birthDate;
     }
 

@@ -21,33 +21,27 @@ public class DriverController {
     public String getAllDrivers(Model model) {
         List<Driver> drivers = (List<Driver>) driverRepository.findAll();
         model.addAttribute("drivers", drivers);
-        return "driver-list"; // имя шаблона
+        return "driver-list";
     }
 
-    // Отображение формы для редактирования водителя
-    @GetMapping("/drivers/edit/{id}")
-    public String showEditForm(@PathVariable("id") Integer id, Model model) {
-        Optional<Driver> driver = driverRepository.findById(id);
-        if (driver.isPresent()) {
-            model.addAttribute("driver", driver.get());
-            return "edit-driver"; // шаблон формы для редактирования
-        } else {
-            // если водитель не найден
-            return "redirect:/drivers";
-        }
+    // Получение водителя по ID для редактирования (AJAX)
+    @GetMapping("/drivers/{id}")
+    @ResponseBody
+    public Optional<Driver> getDriverById(@PathVariable("id") Integer id) {
+        return driverRepository.findById(id);
     }
 
-    // Сохранение изменений водителя
-    @PostMapping("/drivers/update/{id}")
-    public String updateDriver(@PathVariable("id") Long id, @ModelAttribute("driver") Driver driver) {
-        driverRepository.save(driver); // обновляем водителя
-        return "redirect:/drivers"; // перенаправляем на список водителей
+    // Обработка сохранения изменений или добавления нового водителя
+    @PostMapping("/drivers/save")
+    public String saveDriver(@ModelAttribute("driver") Driver driver) {
+        driverRepository.save(driver); // Hibernate автоматически определит, что это обновление или новая запись
+        return "redirect:/drivers"; // Перенаправляем на список водителей
     }
 
     // Удаление водителя
     @GetMapping("/drivers/delete/{id}")
     public String deleteDriver(@PathVariable("id") Integer id) {
-        driverRepository.deleteById(id); // удаляем водителя по ID
-        return "redirect:/drivers"; // перенаправляем на список водителей
+        driverRepository.deleteById(id); // Удаляем водителя по ID
+        return "redirect:/drivers"; // Перенаправляем на список водителей
     }
 }

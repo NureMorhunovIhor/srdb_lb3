@@ -3,21 +3,58 @@
 <head>
   <title>Order List</title>
   <link rel="stylesheet" href="/css/styles.css"/>
+  <style>
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0,0,0);
+      background-color: rgba(0,0,0,0.4);
+      padding-top: 60px;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<h1>Order List</h1>
+<h1>Orders</h1>
 <div class="table-container">
   <table>
     <thead>
     <tr>
       <th>ID</th>
-      <th>Address From</th>
-      <th>Address To</th>
+      <th>From</th>
+      <th>To</th>
       <th>Price</th>
-      <th>Order Status</th>
+      <th>State</th>
       <th>Driver</th>
       <th>Passenger</th>
-      <th>Description</th>
       <th>Actions</th>
     </tr>
     </thead>
@@ -28,17 +65,118 @@
       <td th:text="${order.adressTo}"></td>
       <td th:text="${order.price}"></td>
       <td th:text="${order.orderState}"></td>
-      <td th:text="${order.driver.firstName} + ' ' + ${order.driver.lastName}"></td>
-      <td th:text="${order.passenger.firstName} + ' ' + ${order.passenger.lastName}"></td>
-      <td th:text="${order.description}"></td>
       <td>
-        <a th:href="@{/orders/edit/{id}(id=${order.id})}">Edit</a> |
-        <a th:href="@{/orders/delete/{id}(id=${order.id})}"
-           onclick="return confirm('Are you sure you want to delete this order?');">Delete</a>
+                    <span th:if="${order.driver != null}"
+                          th:text="${order.driver.firstName} + ' ' + ${order.driver.lastName}"></span>
+        <span th:if="${order.driver == null}">No Driver</span>
+      </td>
+      <td>
+                    <span th:if="${order.passenger != null}"
+                          th:text="${order.passenger.firstName} + ' ' + ${order.passenger.lastName}"></span>
+        <span th:if="${order.passenger == null}">No Passenger</span>
+      </td>
+      <td>
+        <a href="#" th:onclick="'openOrderModal(' + ${order.id} + '); return false;'">Edit</a>
+        <a th:href="@{/orders/delete/{id}(id=${order.id})}">Delete</a>
       </td>
     </tr>
     </tbody>
   </table>
 </div>
+<button id="addOrderBtn">Add Order</button>
+
+<!-- Модальное окно для добавления/редактирования заказа -->
+<div id="orderModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2 id="orderModalTitle">Add Order</h2>
+    <form id="orderForm" action="/orders/add" method="post">
+      <input type="hidden" id="orderId" name="id"/>
+
+      <label for="adressFrom">From:</label>
+      <input type="text" id="adressFrom" name="adressFrom" required><br>
+
+      <label for="adressTo">To:</label>
+      <input type="text" id="adressTo" name="adressTo" required><br>
+
+      <label for="price">Price:</label>
+      <input type="number" id="price" name="price" required><br>
+
+      <label for="orderState">State:</label>
+      <input type="text" id="orderState" name="orderState" required><br>
+
+      <label for="driverId">Driver:</label>
+      <select id="driverId" name="driverId" required>
+        <option th:each="driver : ${drivers}"
+                th:value="${driver.id}"
+                th:text="${driver.firstName} + ' ' + ${driver.lastName}">
+        </option>
+      </select><br>
+
+      <label for="passengerId">Passenger:</label>
+      <select id="passengerId" name="passengerId" required>
+        <option th:each="passenger : ${passengers}"
+                th:value="${passenger.id}"
+                th:text="${passenger.firstName} + ' ' + ${passenger.lastName}">
+        </option>
+      </select><br>
+
+      <button type="submit">Save Order</button>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  var orderModal = document.getElementById("orderModal");
+  var addOrderBtn = document.getElementById("addOrderBtn");
+  var closeBtn = document.getElementsByClassName("close")[0];
+
+  // Открытие модального окна для добавления нового заказа
+  addOrderBtn.onclick = function () {
+    clearOrderForm();
+    document.getElementById("orderModalTitle").innerText = "Add Order";
+    orderModal.style.display = "block";
+  }
+
+  // Закрытие модального окна
+  closeBtn.onclick = function () {
+    orderModal.style.display = "none";
+  }
+
+  window.onclick = function (event) {
+    if (event.target == orderModal) {
+      orderModal.style.display = "none";
+    }
+  }
+
+  function openOrderModal(id) {
+    fetch(`/orders/edit/${id}`)
+  .then(response => response.json())
+            .then(order => {
+              document.getElementById("orderId").value = order.id;
+              document.getElementById("adressFrom").value = order.adressFrom;
+              document.getElementById("adressTo").value = order.adressTo;
+              document.getElementById("price").value = order.price;
+              document.getElementById("orderState").value = order.orderState;
+              document.getElementById("driverId").value = order.driver.id;
+              document.getElementById("passengerId").value = order.passenger.id;
+              document.getElementById("orderModalTitle").innerText = "Edit Order";
+              orderModal.style.display = "block";
+            })
+            .catch(error => console.error('Error fetching order:', error));
+  }
+
+
+  function clearOrderForm() {
+    document.getElementById("orderId").value = "";
+    document.getElementById("adressFrom").value = "";
+    document.getElementById("adressTo").value = "";
+    document.getElementById("price").value = "";
+    document.getElementById("orderState").value = "";
+    document.getElementById("driverId").value = "";
+    document.getElementById("passengerId").value = "";
+  }
+</script>
 </body>
 </html>

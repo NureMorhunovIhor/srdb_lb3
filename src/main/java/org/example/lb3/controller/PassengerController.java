@@ -30,34 +30,19 @@ public class PassengerController {
         return "passengers"; // название вашего HTML файла (passengers.html)
     }
 
-    // Создать нового пассажира
-    @PostMapping("/add")
-    public String createPassenger(@ModelAttribute Passenger passenger) {
-        passengerRepository.save(passenger);
-        return "redirect:/passengers"; // перенаправление на страницу списка пассажиров
-    }
-
     // Получить пассажира по ID для редактирования
     @GetMapping("/edit/{id}")
-    public String editPassenger(@PathVariable Integer id, Model model) {
+    @ResponseBody
+    public ResponseEntity<Passenger> editPassenger(@PathVariable Integer id) {
         Optional<Passenger> passenger = passengerRepository.findById(id);
-        if (passenger.isPresent()) {
-            model.addAttribute("passenger", passenger.get());
-            return "editPassenger"; // имя HTML шаблона для редактирования
-        } else {
-            return "redirect:/passengers"; // перенаправление, если не найдено
-        }
+        return passenger.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Обновить существующего пассажира
-    @PostMapping("/edit")
-    public String updatePassenger(@ModelAttribute Passenger passenger) {
-        if (passengerRepository.existsById(passenger.getId())) {
-            passengerRepository.save(passenger);
-            return "redirect:/passengers";
-        } else {
-            return "redirect:/passengers?error=PassengerNotFound";
-        }
+    // Сохранить или обновить пассажира
+    @PostMapping("/save")
+    public String savePassenger(@ModelAttribute Passenger passenger) {
+        passengerRepository.save(passenger);
+        return "redirect:/passengers"; // перенаправление на страницу списка пассажиров
     }
 
     // Удалить пассажира

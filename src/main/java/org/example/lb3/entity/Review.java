@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 public class Review {
@@ -24,7 +25,7 @@ public class Review {
 
     @ColumnDefault("getdate()")
     @Column(name = "Creation_datetime")
-    private Instant creationDatetime;
+    private LocalDateTime creationDatetime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -56,11 +57,11 @@ public class Review {
         this.comment = comment;
     }
 
-    public Instant getCreationDatetime() {
+    public LocalDateTime getCreationDatetime() {
         return creationDatetime;
     }
 
-    public void setCreationDatetime(Instant creationDatetime) {
+    public void setCreationDatetime(LocalDateTime creationDatetime) {
         this.creationDatetime = creationDatetime;
     }
 

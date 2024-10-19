@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Orders")
@@ -26,7 +27,7 @@ public class Order {
 
     @ColumnDefault("getdate()")
     @Column(name = "Creation_datetime")
-    private Instant creationDatetime;
+    private LocalDateTime creationDatetime;
 
     @Column(name = "Price", nullable = false)
     private Double price;
@@ -40,24 +41,18 @@ public class Order {
 
     @ColumnDefault("getdate()")
     @Column(name = "Preferred_datetime")
-    private Instant preferredDatetime;
+    private LocalDateTime preferredDatetime;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "Passenger_id")
+    private Passenger passenger;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "Driver_id")
     private Driver driver;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Passenger_id")
-    private Passenger passenger;
-
-    public Passenger getPassenger() {
-        return passenger;
-    }
-
-    public void setPassenger(Passenger passenger) {
-        this.passenger = passenger;
-    }
     @Nationalized
     @Column(name = "Description", length = 100)
     private String description;
@@ -86,11 +81,11 @@ public class Order {
         this.adressTo = adressTo;
     }
 
-    public Instant getCreationDatetime() {
+    public LocalDateTime getCreationDatetime() {
         return creationDatetime;
     }
 
-    public void setCreationDatetime(Instant creationDatetime) {
+    public void setCreationDatetime(LocalDateTime creationDatetime) {
         this.creationDatetime = creationDatetime;
     }
 
@@ -118,12 +113,20 @@ public class Order {
         this.luggageWeight = luggageWeight;
     }
 
-    public Instant getPreferredDatetime() {
+    public LocalDateTime getPreferredDatetime() {
         return preferredDatetime;
     }
 
-    public void setPreferredDatetime(Instant preferredDatetime) {
+    public void setPreferredDatetime(LocalDateTime preferredDatetime) {
         this.preferredDatetime = preferredDatetime;
+    }
+
+    public Passenger getPassenger() {
+        return passenger;
+    }
+
+    public void setPassenger(Passenger passenger) {
+        this.passenger = passenger;
     }
 
     public Driver getDriver() {
