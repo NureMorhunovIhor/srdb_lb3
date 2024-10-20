@@ -1,16 +1,17 @@
 package org.example.lb3.controller;
 
-import org.example.lb3.dto.CarCategoryDTO;
 import org.example.lb3.entity.Car;
-import org.example.lb3.entity.CarCategory; // Убедитесь, что у вас есть этот класс
-import org.example.lb3.repository.CarCategoryRepository; // Добавьте этот репозиторий
+import org.example.lb3.entity.CarCategory;
+import org.example.lb3.entity.Driver;
+import org.example.lb3.repository.CarCategoryRepository;
 import org.example.lb3.repository.CarRepository;
+import org.example.lb3.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,34 +20,48 @@ import java.util.Optional;
 public class CarController {
 
     private final CarRepository carRepository;
-    private final CarCategoryRepository carCategoryRepository; // Добавьте этот репозиторий
+    private final DriverRepository driverRepository;
+    private final CarCategoryRepository carCategoryRepository;
 
     @Autowired
-    public CarController(CarRepository carRepository, CarCategoryRepository carCategoryRepository) {
+    public CarController(CarRepository carRepository, DriverRepository driverRepository, CarCategoryRepository carCategoryRepository) {
         this.carRepository = carRepository;
-        this.carCategoryRepository = carCategoryRepository; // Инициализация
+        this.driverRepository = driverRepository;
+        this.carCategoryRepository = carCategoryRepository;
     }
 
-    // Получить все машины с категориями
+    // Получить все машины
     @GetMapping("/all")
-    public String getAllCarsWithCategory(Model model) {
-        List<Object[]> carData = carRepository.findAllCarsWithCategory();
-        List<CarCategoryDTO> cars = new ArrayList<>();
+    public String getAllCars(Model model) {
+        List<Car> cars = carRepository.findAll();
+        List<Driver> drivers = (List<Driver>) driverRepository.findAll();
+        List<CarCategory> carCategories = carCategoryRepository.findAll();
 
-        for (Object[] obj : carData) {
-            cars.add(new CarCategoryDTO(
-                    (String) obj[0],     // Car_number
-                    (String) obj[1],     // Model
-                    (String) obj[2],     // Color
-                    (Integer) obj[3],    // Production_year
-                    (String) obj[4],     // Category_name
-                    obj[5] != null ? (Integer) obj[5] : 0,  // Max_passengers_number
-                    obj[6] != null ? (Double) obj[6] : 0.0  // Kilometer_price
-            ));
-        }
+        // Логируем данные
+        System.out.println("Cars: " + cars);
+        System.out.println("Drivers: " + drivers);
+        System.out.println("Car Categories: " + carCategories);
+
         model.addAttribute("cars", cars);
-        return "carDetails"; // HTML-шаблон для отображения
+        model.addAttribute("drivers", drivers);
+        model.addAttribute("carCategories", carCategories);
+        return "carDetails";
     }
+
+    @PostMapping("/add")
+    public String addCar(@RequestParam Integer driverId, @RequestParam Integer carCategoryId, @ModelAttribute Car newCar) {
+        Optional<Driver> driverOptional = driverRepository.findById(driverId);
+        Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(carCategoryId);
+
+        driverOptional.ifPresent(newCar::setDriver);
+        carCategoryOptional.ifPresent(newCar::setCarCategory);
+
+        // Сохраняем новый автомобиль
+        carRepository.save(newCar);
+        return "redirect:/cars/all";
+    }
+
+
 
     // Удаление машины по номеру
     @GetMapping("/delete/{carNumber}")
@@ -56,42 +71,33 @@ public class CarController {
     }
 
     @GetMapping("/edit/{carNumber}")
-    public String showEditForm(@PathVariable String carNumber, Model model) {
-        Optional<Car> carOptional = carRepository.findById(carNumber);
-        if (carOptional.isPresent()) {
-            Car car = carOptional.get();
-            model.addAttribute("car", car);
-
-            // Здесь нужно получить список доступных категорий
-            List<CarCategory> categories = carCategoryRepository.findAll(); // Замените на ваш репозиторий
-            model.addAttribute("categories", categories);
-
-            return "editCar"; // Отдельный HTML-шаблон для редактирования
-        }
-        return "redirect:/cars/all"; // Если машина не найдена, перенаправление на список
+    @ResponseBody
+    public ResponseEntity<?> showEditForm(@PathVariable String carNumber) {
+        System.out.println("Received request for car number: " + carNumber);
+        Optional<Car> carOptional = Optional.of(carRepository.findById(carNumber).get());
+        System.out.println("Car found: " + carOptional.get());
+        return ResponseEntity.ok(carOptional.get());
     }
 
-    @PostMapping("/update")
-    public String updateCar(@ModelAttribute Car updatedCar) {
+
+
+    @PostMapping("/edit/{carNumber}")
+    public String updateCar(@ModelAttribute Car updatedCar, @RequestParam Integer driverId, @RequestParam Integer carCategoryId) {
         Optional<Car> existingCarOptional = carRepository.findById(updatedCar.getCarNumber());
 
         if (existingCarOptional.isPresent()) {
             Car existingCar = existingCarOptional.get();
+            Optional<Driver> driverOptional = driverRepository.findById(driverId);
+            Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(carCategoryId);
 
-            // Обновление данных автомобиля
             existingCar.setModel(updatedCar.getModel());
             existingCar.setColor(updatedCar.getColor());
             existingCar.setProductionYear(updatedCar.getProductionYear());
-
-            // Если категория изменилась, обновляем ее
-            if (updatedCar.getCarCategory() != null) {
-                existingCar.setCarCategory(updatedCar.getCarCategory());
-            }
-
-            // Сохраняем изменения
-            carRepository.save(existingCar);
+            driverOptional.ifPresent(existingCar::setDriver);
+            carCategoryOptional.ifPresent(existingCar::setCarCategory);
+            carRepository.save(existingCar); // Сохраняем изменения
         }
 
-        return "redirect:/cars/all";
+        return "redirect:/cars/all"; // Перенаправление на список после обновления
     }
 }
