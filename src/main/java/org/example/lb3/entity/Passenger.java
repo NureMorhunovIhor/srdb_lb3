@@ -1,9 +1,11 @@
 package org.example.lb3.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table (name = "Passenger")
@@ -35,6 +37,10 @@ public class Passenger {
     @Nationalized
     @Column(name = "Email", nullable = false, length = 50)
     private String email;
+
+    @OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference
+    private List<Order> orders;
 
     public Integer getId() {
         return id;

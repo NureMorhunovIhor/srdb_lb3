@@ -56,14 +56,11 @@ public class CarController {
         driverOptional.ifPresent(newCar::setDriver);
         carCategoryOptional.ifPresent(newCar::setCarCategory);
 
-        // Сохраняем новый автомобиль
         carRepository.save(newCar);
         return "redirect:/cars/all";
     }
 
 
-
-    // Удаление машины по номеру
     @GetMapping("/delete/{carNumber}")
     public String deleteCar(@PathVariable String carNumber) {
         carRepository.deleteById(carNumber);
@@ -78,7 +75,6 @@ public class CarController {
         System.out.println("Car found: " + carOptional.get());
         return ResponseEntity.ok(carOptional.get());
     }
-
 
 
     @PostMapping("/edit/{carNumber}")

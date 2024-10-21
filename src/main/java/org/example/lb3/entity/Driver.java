@@ -1,5 +1,6 @@
 package org.example.lb3.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Nationalized;
 
@@ -51,6 +52,7 @@ public class Driver {
     private Date birthDate;
 
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference
     private List<Order> orders;
 
     public List<Order> getOrders() {

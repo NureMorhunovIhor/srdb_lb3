@@ -1,5 +1,6 @@
 package org.example.lb3.controller;
 
+import org.example.lb3.entity.Car;
 import org.example.lb3.entity.Driver;
 import org.example.lb3.entity.Order;
 import org.example.lb3.entity.Passenger;
@@ -7,6 +8,7 @@ import org.example.lb3.repository.DriverRepository;
 import org.example.lb3.repository.OrderRepository;
 import org.example.lb3.repository.PassengerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -41,14 +43,6 @@ public class OrderController {
         return "order-list";
     }
 
-    @GetMapping("/add")
-    public String addOrderForm(Model model) {
-        model.addAttribute("order", new Order());
-        model.addAttribute("drivers", driverRepository.findAll());
-        model.addAttribute("passengers", passengerRepository.findAll());
-        return "order-form";
-    }
-
     @PostMapping("/add")
     public String addOrder(@ModelAttribute Order order,
                            @RequestParam Integer driverId,
@@ -66,8 +60,9 @@ public class OrderController {
 
     @GetMapping("/edit/{id}")
     @ResponseBody
-    public Order getOrderJson(@PathVariable Integer id, Model model) {
-       return orderRepository.findById(id).orElse(null);
+    public ResponseEntity<?> getOrderJson(@PathVariable Integer id) {
+        Optional<Order> order = Optional.of(orderRepository.findById(id).get());
+        return ResponseEntity.ok(order.get());
     }
 
     @PostMapping("/edit/{id}")
