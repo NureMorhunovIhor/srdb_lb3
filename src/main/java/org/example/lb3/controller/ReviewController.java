@@ -48,7 +48,7 @@ public class ReviewController {
         Optional<Order> order = orderRepository.findById(orderId);
         if (order.isPresent()) {
             review.setOrder(order.get());
-            review.setCreationDatetime(LocalDateTime.now()); // Устанавливаем текущее время
+            review.setCreationDatetime(LocalDateTime.now());
         } else {
         }
         reviewRepository.save(review);
@@ -67,7 +67,7 @@ public class ReviewController {
     public String editReview(@PathVariable Integer id, @ModelAttribute Review review) {
         Review existingReview = reviewRepository.findById(id).orElse(null);
         if (existingReview != null) {
-            review.setCreationDatetime(LocalDateTime.now()); // Устанавливаем текущую дату и время
+            review.setCreationDatetime(LocalDateTime.now());
             review.setId(id);
             reviewRepository.save(review);
         }

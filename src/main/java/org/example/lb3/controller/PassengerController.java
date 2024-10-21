@@ -22,15 +22,13 @@ public class PassengerController {
         this.passengerRepository = passengerRepository;
     }
 
-    // Получить всех пассажиров и отобразить их в представлении
     @GetMapping
     public String getAllPassengers(Model model) {
         List<Passenger> passengers = passengerRepository.findAll();
         model.addAttribute("passengers", passengers);
-        return "passengers"; // название вашего HTML файла (passengers.html)
+        return "passengers";
     }
 
-    // Получить пассажира по ID для редактирования
     @GetMapping("/edit/{id}")
     @ResponseBody
     public ResponseEntity<Passenger> editPassenger(@PathVariable Integer id) {
@@ -42,7 +40,7 @@ public class PassengerController {
     @PostMapping("/save")
     public String savePassenger(@ModelAttribute Passenger passenger) {
         passengerRepository.save(passenger);
-        return "redirect:/passengers"; // перенаправление на страницу списка пассажиров
+        return "redirect:/passengers";
     }
 
     // Удалить пассажира
@@ -51,6 +49,6 @@ public class PassengerController {
         if (passengerRepository.existsById(id)) {
             passengerRepository.deleteById(id);
         }
-        return "redirect:/passengers"; // перенаправление на страницу списка пассажиров
+        return "redirect:/passengers";
     }
 }

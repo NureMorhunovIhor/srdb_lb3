@@ -67,7 +67,7 @@ public class CarController {
     @GetMapping("/delete/{carNumber}")
     public String deleteCar(@PathVariable String carNumber) {
         carRepository.deleteById(carNumber);
-        return "redirect:/cars/all"; // Перенаправление на список после удаления
+        return "redirect:/cars/all";
     }
 
     @GetMapping("/edit/{carNumber}")
@@ -95,9 +95,9 @@ public class CarController {
             existingCar.setProductionYear(updatedCar.getProductionYear());
             driverOptional.ifPresent(existingCar::setDriver);
             carCategoryOptional.ifPresent(existingCar::setCarCategory);
-            carRepository.save(existingCar); // Сохраняем изменения
+            carRepository.save(existingCar);
         }
 
-        return "redirect:/cars/all"; // Перенаправление на список после обновления
+        return "redirect:/cars/all";
     }
 }

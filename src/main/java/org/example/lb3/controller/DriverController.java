@@ -24,24 +24,22 @@ public class DriverController {
         return "driver-list";
     }
 
-    // Получение водителя по ID для редактирования (AJAX)
     @GetMapping("/drivers/{id}")
     @ResponseBody
     public Optional<Driver> getDriverById(@PathVariable("id") Integer id) {
         return driverRepository.findById(id);
     }
 
-    // Обработка сохранения изменений или добавления нового водителя
     @PostMapping("/drivers/save")
     public String saveDriver(@ModelAttribute("driver") Driver driver) {
-        driverRepository.save(driver); // Hibernate автоматически определит, что это обновление или новая запись
-        return "redirect:/drivers"; // Перенаправляем на список водителей
+        driverRepository.save(driver);
+        return "redirect:/drivers";
     }
 
     // Удаление водителя
     @GetMapping("/drivers/delete/{id}")
     public String deleteDriver(@PathVariable("id") Integer id) {
-        driverRepository.deleteById(id); // Удаляем водителя по ID
-        return "redirect:/drivers"; // Перенаправляем на список водителей
+        driverRepository.deleteById(id);
+        return "redirect:/drivers";
     }
 }
