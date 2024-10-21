@@ -49,7 +49,6 @@ public class OrderController {
         return "order-form";
     }
 
-    // Обработка добавления нового заказа
     @PostMapping("/add")
     public String addOrder(@ModelAttribute Order order,
                            @RequestParam Integer driverId,
@@ -65,14 +64,12 @@ public class OrderController {
         return "redirect:/orders";
     }
 
-    // Получение данных заказа для редактирования (JSON)
     @GetMapping("/edit/{id}")
     @ResponseBody
     public Order getOrderJson(@PathVariable Integer id, Model model) {
        return orderRepository.findById(id).orElse(null);
     }
 
-    // Обработка редактирования заказа
     @PostMapping("/edit/{id}")
     public String editOrder(@PathVariable Integer id,
                             @ModelAttribute Order order,
@@ -92,7 +89,6 @@ public class OrderController {
         return "redirect:/orders";
     }
 
-    // Удаление заказа
     @GetMapping("/delete/{id}")
     public String deleteOrder(@PathVariable Integer id) {
         orderRepository.deleteById(id);

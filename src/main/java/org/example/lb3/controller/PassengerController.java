@@ -36,14 +36,12 @@ public class PassengerController {
         return passenger.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Сохранить или обновить пассажира
     @PostMapping("/save")
     public String savePassenger(@ModelAttribute Passenger passenger) {
         passengerRepository.save(passenger);
         return "redirect:/passengers";
     }
 
-    // Удалить пассажира
     @GetMapping("/delete/{id}")
     public String deletePassenger(@PathVariable Integer id) {
         if (passengerRepository.existsById(id)) {

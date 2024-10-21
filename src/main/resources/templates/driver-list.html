@@ -8,9 +8,12 @@
 <body>
 <h1>Drivers List</h1>
 
-<!-- Кнопка для добавления нового водителя -->
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#driverModal" onclick="clearForm();">
   Add New Driver
+</button>
+
+<button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#countByCityModal">
+  Get Driver Count By City
 </button>
 
 <div class="table-responsive">
@@ -119,6 +122,29 @@
   </div>
 </div>
 
+<!-- Модальное окно для запроса количества водителей по городу -->
+<div class="modal fade" id="countByCityModal" tabindex="-1" aria-labelledby="countByCityModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="countByCityModalLabel">Get Driver Count By City</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="cityInput" class="form-label">Enter City</label>
+          <input type="text" class="form-control" id="cityInput" required>
+        </div>
+        <div id="driverCountResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="getDriverCountByCity()">Get Count</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js" defer></script>
 <script>
   function openModal(id) {
@@ -151,6 +177,17 @@
     document.getElementById('driverForm').reset();
     document.getElementById('driverId').value = "";
     document.getElementById('driverModalLabel').innerText = 'Add Driver';
+  }
+
+  function getDriverCountByCity() {
+    const city = document.getElementById('cityInput').value;
+
+    fetch(`/drivers/countByCity?city=${city}`)
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('driverCountResult').innerText = `Drivers in ${city}: ${data.count}`;
+            })
+            .catch(error => alert('Error: ' + error.message));
   }
 </script>
 </body>

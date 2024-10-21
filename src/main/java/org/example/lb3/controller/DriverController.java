@@ -7,7 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -42,4 +44,15 @@ public class DriverController {
         driverRepository.deleteById(id);
         return "redirect:/drivers";
     }
+
+    // Получение количества водителей по городу
+    @GetMapping("/drivers/countByCity")
+    @ResponseBody
+    public Map<String, Integer> getDriverCountByCity(@RequestParam("city") String city) {
+        int count = driverRepository.countByCity(city);
+        Map<String, Integer> response = new HashMap<>();
+        response.put("count", count);
+        return response;
+    }
+
 }
