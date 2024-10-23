@@ -1,6 +1,6 @@
 package org.example.lb3.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Nationalized;
 
@@ -9,38 +9,46 @@ import java.util.List;
 
 @Entity
 @Table (name = "Passenger")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Passenger {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Passenger_id", nullable = false)
+    @JsonProperty
     private Integer id;
 
     @Nationalized
     @Column(name = "First_name", length = 40)
+    @JsonProperty()
     private String firstName;
 
     @Nationalized
     @Column(name = "Last_name", length = 50)
+    @JsonProperty
     private String lastName;
 
     @Nationalized
     @Column(name = "Phone_number", length = 15)
+    @JsonProperty
     private String phoneNumber;
 
     @Column(name = "Birth_date")
+    @JsonProperty
     private LocalDate birthDate;
 
     @Nationalized
     @Column(name = "Gender", length = 8)
+    @JsonProperty
     private String gender;
 
     @Nationalized
     @Column(name = "Email", nullable = false, length = 50)
+    @JsonProperty
     private String email;
 
     @OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonBackReference
     private List<Order> orders;
+
 
     public Integer getId() {
         return id;

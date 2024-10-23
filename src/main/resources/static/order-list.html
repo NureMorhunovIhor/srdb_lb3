@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Orders List</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<h1>Orders List</h1>
+
+<!-- Button to trigger modal -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal" onclick="clearOrderForm(); setModalForAdd();">
+  Add New Order
+</button>
+
+<div class="table-responsive">
+  <table class="table table-bordered table-striped" id="ordersTable">
+    <thead class="table-dark">
+    <tr>
+      <th>Order ID</th>
+      <th>Driver</th>
+      <th>Passenger</th>
+      <th>Creation Date</th>
+      <th>Price</th>
+      <th>Address From</th>
+      <th>Address To</th>
+      <th>Order State</th>
+      <th>Luggage Weight</th>
+      <th>Description</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Order data will be loaded via JavaScript -->
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal for adding/editing order -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orderModalLabel">Create New Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="orderForm" onsubmit="submitOrderForm(event)">
+        <div class="modal-body">
+            <input type="hidden"  id="orderId" name="orderId"/>
+          <div class="mb-3">
+            <label for="driverId" class="form-label">Driver</label>
+            <select class="form-select" id="driverId" name="driverId" required>
+              <option value="" disabled selected>Select a driver</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="passengerId" class="form-label">Passenger</label>
+            <select class="form-select" id="passengerId" name="passengerId" required>
+              <option value="" disabled selected>Select a passenger</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" step=0.01  class="form-control" id="price" name="price" required/>
+          </div>
+          <div class="mb-3">
+            <label for="adressFrom" class="form-label">Address From</label>
+            <input type="text" class="form-control" id="adressFrom" name="adressFrom" required/>
+          </div>
+          <div class="mb-3">
+            <label for="adressTo" class="form-label">Address To</label>
+            <input type="text" class="form-control" id="adressTo" name="adressTo" required/>
+          </div>
+          <div class="mb-3">
+            <label for="orderState" class="form-label">Order State</label>
+            <input type="text" class="form-control" id="orderState" name="orderState" required/>
+          </div>
+          <div class="mb-3">
+            <label for="luggageWeight" class="form-label">Luggage Weight</label>
+            <input type="number" class="form-control" id="luggageWeight" name="luggageWeight" required/>
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" id="saveButton">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', fetchOrders);
+  document.addEventListener('DOMContentLoaded', fetchDrivers);
+  document.addEventListener('DOMContentLoaded', fetchPassengers); // Загружаем пассажиров
+
+  function fetchDrivers() {
+    fetch('/api/drivers')
+            .then(response => response.json())
+            .then(drivers => {
+              const driverSelect = document.getElementById('driverId');
+              driverSelect.innerHTML = '';
+              drivers.forEach(driver => {
+                const option = document.createElement('option');
+                option.value = driver.id;
+                option.textContent = `${driver.firstName} ${driver.lastName}`;
+                driverSelect.appendChild(option);
+              });
+            })
+            .catch(error => console.error('Error fetching drivers:', error));
+  }
+
+  function fetchPassengers() { // Функция для получения списка пассажиров
+    fetch('/api/passengers')
+            .then(response => response.json())
+            .then(passengers => {
+              const passengerSelect = document.getElementById('passengerId');
+              passengerSelect.innerHTML = '';
+              passengers.forEach(passenger => {
+                const option = document.createElement('option');
+                option.value = passenger.id;
+                option.textContent = `${passenger.firstName} ${passenger.lastName}`;
+                passengerSelect.appendChild(option);
+              });
+            })
+            .catch(error => console.error('Error fetching passengers:', error));
+  }
+
+  function fetchOrders() {
+    fetch('/api/orders')
+            .then(response => response.json())
+            .then(orders => {
+              const tableBody = document.querySelector('#ordersTable tbody');
+              tableBody.innerHTML = ''; // Очищаем таблицу
+
+              orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+          <td>${order.id}</td>
+          <td>${order.driver !=null ? order.driver.firstName + ' ' + order.driver.lastName : 'No Driver'}</td>
+          <td>${order.passenger !=null ? order.passenger.firstName + ' ' + order.passenger.lastName : 'No Passenger'}</td>
+          <td>${order.creationDatetime}</td>
+          <td>${order.price}</td>
+          <td>${order.adressFrom}</td>
+          <td>${order.adressTo}</td>
+          <td>${order.orderState}</td>
+          <td>${order.luggageWeight}</td>
+          <td>${order.description || 'No Description'}</td>
+          <td>
+            <a href="#" class="btn btn-warning" onclick="populateEditModal(${order.id}); return false;">Edit</a>
+            <button class="btn btn-danger" onclick="deleteOrder(${order.id})">Delete</button>
+          </td>
+        `;
+                tableBody.appendChild(row);
+              });
+            })
+            .catch(error => console.error('Error fetching orders:', error));
+  }
+
+
+  function populateEditModal(orderId) {
+    fetch(`/api/orders/${orderId}`)
+            .then(response => response.json())
+            .then(order => {
+              document.getElementById('orderId').value = order.id;
+              document.getElementById('driverId').value = order.driver ? order.driver.id : '' ;
+              document.getElementById('passengerId').value = order.passenger ? order.passenger.id : '';
+              document.getElementById('adressFrom').value = order.adressFrom;
+              document.getElementById('adressTo').value = order.adressTo;
+              document.getElementById('price').value = order.price;
+              document.getElementById('orderState').value = order.orderState;
+              document.getElementById('luggageWeight').value = order.luggageWeight;
+              document.getElementById('description').value = order.description;
+              document.getElementById('orderId').setAttribute('readonly', true);
+              document.getElementById('orderModalLabel').textContent = 'Edit Order';
+              document.getElementById('saveButton').setAttribute('data-method', 'PUT');
+
+              const orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
+              orderModal.show();
+            })
+            .catch(error => console.error('Error fetching order:', error));
+  }
+
+  function setModalForAdd() {
+    const saveButton = document.getElementById('saveButton');
+    if (saveButton) {
+      document.getElementById('orderModalLabel').textContent = 'Create New Order';
+      saveButton.setAttribute('data-method', 'POST');
+      clearOrderForm();
+    } else {
+      console.error('Save button not found');
+    }
+  }
+
+  function submitOrderForm(event) {
+    event.preventDefault();
+
+    const orderId = document.getElementById('orderId').value;
+    const driverId = document.getElementById('driverId').value;
+    const passengerId = document.getElementById('passengerId').value;
+    const price = document.getElementById('price').value;
+    const adressFrom = document.getElementById('adressFrom').value;
+    const adressTo = document.getElementById('adressTo').value;
+    const orderState = document.getElementById('orderState').value;
+    const luggageWeight = document.getElementById('luggageWeight').value;
+    const description = document.getElementById('description').value;
+
+    const saveButton = document.getElementById('saveButton');
+    const method = saveButton.getAttribute('data-method');
+    const url = method === 'PUT' ? `/api/orders/${orderId}` : '/api/orders';
+
+    const orderData = {
+      driver: { id: driverId },
+      passenger: { id: passengerId },
+      price: price,
+      adressFrom: adressFrom,
+      adressTo: adressTo,
+      orderState: orderState,
+      luggageWeight: luggageWeight,
+      description: description
+    };
+    console.log(orderData);
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderData)
+    })
+            .then(response => {
+              if (response.ok) {
+                fetchOrders();
+                clearOrderForm();
+                const orderModal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
+                orderModal.hide();
+              } else {
+                console.error('Failed to save order:', response);
+              }
+            })
+            .catch(error => console.error('Error saving order:', error));
+
+  }
+
+  function deleteOrder(orderId) {
+    fetch(`/api/orders/${orderId}`, {
+      method: 'DELETE'
+    })
+            .then(response => {
+              if (response.ok) {
+                fetchOrders();
+              } else {
+                console.error('Failed to delete order:', response);
+              }
+            })
+            .catch(error => console.error('Error deleting order:', error));
+  }
+
+  function clearOrderForm() {
+    document.getElementById('orderForm').reset();
+    document.getElementById('orderId').removeAttribute('readonly');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cars List</title>
+    <link rel="stylesheet" href="/css/styles.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<h1>Cars List</h1>
+
+<!-- Button to trigger modal -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#carModal" onclick="clearForm(); setModalForAdd();">
+    Add New Car
+</button>
+
+<button type="button" class="btn btn-secondary" onclick="window.location.href='/categories';">
+    Categories
+</button>
+<div class="table-responsive">
+    <table class="table table-bordered table-striped" id="carsTable">
+        <thead class="table-dark">
+        <tr>
+            <th>Car Number</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Production Year</th>
+            <th>Driver</th>
+            <th>Category</th>
+            <th>Max Passengers</th>
+            <th>Kilometer Price</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Данные автомобилей будут загружены через JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal for adding/editing car -->
+<div class="modal fade" id="carModal" tabindex="-1" aria-labelledby="carModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="carForm" onsubmit="submitCarForm(event);">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="carModalLabel">Create New Car</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="carNumber" class="form-label">Car Number</label>
+                        <input type="text" class="form-control" id="carNumber" name="carNumber"  readonly/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="model" class="form-label">Model</label>
+                        <input type="text" class="form-control" id="model" name="model" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="text" class="form-control" id="color" name="color" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="productionYear" class="form-label">Production Year</label>
+                        <input type="number" class="form-control" id="productionYear" name="productionYear" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="driverId" class="form-label">Driver</label>
+                        <select class="form-select" id="driverId" name="driverId" required>
+                            <option th:each="driver : ${drivers}" th:value="${driver.id}" th:text="${driver.firstName} + ' ' + ${driver.lastName}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryId" class="form-label">Category</label>
+                        <select class="form-select" id="categoryId" name="carCategoryId" required>
+                            <option th:each="category : ${carCategories}" th:value="${category.id}" th:text="${category.categoryName}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="saveButton">Save Car</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js" defer></script>
+<script>
+    document.addEventListener('DOMContentLoaded', fetchCars);
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchCars();
+        fetchDrivers();
+        fetchCategories();
+    });
+
+    function fetchDrivers() {
+        fetch('/api/cars/drivers')
+            .then(response => response.json())
+            .then(drivers => {
+                const driverSelect = document.getElementById('driverId');
+                driverSelect.innerHTML = '';
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    driverSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching drivers:', error));
+    }
+
+    function fetchCategories() {
+        fetch('/api/cars/categories')
+            .then(response => response.json())
+            .then(categories => {
+                const categorySelect = document.getElementById('categoryId');
+                categorySelect.innerHTML = ''; // Очистите текущее содержимое
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.categoryName;
+                    categorySelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching categories:', error));
+    }
+
+    function fetchCars() {
+        fetch('/api/cars')
+            .then(response => response.json())
+            .then(cars => {
+                const tableBody = document.querySelector('#carsTable tbody');
+                tableBody.innerHTML = '';
+                cars.forEach(car => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${car.carNumber}</td>
+                        <td>${car.model}</td>
+                        <td>${car.color}</td>
+                        <td>${car.productionYear}</td>
+                        <td>${car.driver ? car.driver.firstName + ' ' + car.driver.lastName : 'No Driver'}</td>
+                        <td>${car.carCategory ? car.carCategory.categoryName : 'No Category'}</td>
+                        <td>${car.carCategory ? car.carCategory.maxPassengersNumber : 'N/A'}</td>
+                        <td>${car.carCategory ? car.carCategory.kilometerPrice : 'N/A'}</td>
+                        <td>
+                            <a href="#" class="btn btn-warning" onclick="populateEditModal('${car.carNumber}'); return false;">Edit</a>
+                            <button class="btn btn-danger" onclick="deleteCar('${car.carNumber}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching cars:', error));
+    }
+
+    function populateEditModal(carNumber) {
+        fetch(`/api/cars/${carNumber}`)
+            .then(response => response.json())
+            .then(car => {
+                document.getElementById('carNumber').value = car.carNumber;
+                document.getElementById('model').value = car.model;
+                document.getElementById('color').value = car.color;
+                document.getElementById('productionYear').value = car.productionYear;
+                document.getElementById('driverId').value = car.driver.id;
+                document.getElementById('categoryId').value = car.carCategory.id;
+
+                document.getElementById('carNumber').setAttribute('readonly', true);
+                document.getElementById('carModalLabel').textContent = 'Edit Car';
+                document.getElementById('saveButton').setAttribute('data-method', 'PUT');
+
+                const carModal = new bootstrap.Modal(document.getElementById('carModal'));
+                carModal.show();
+            })
+            .catch(error => console.error('Error fetching car:', error));
+    }
+
+        function setModalForAdd() {
+        const saveButton = document.getElementById('saveButton');
+        if (saveButton) {
+        document.getElementById('carModalLabel').textContent = 'Create New Car';
+        saveButton.setAttribute('data-method', 'POST');
+        clearForm();
+    } else {
+        console.error('Save button not found');
+    }
+    }
+
+    function submitCarForm(event) {
+        event.preventDefault();
+        const carNumber = document.getElementById('carNumber').value.trim();
+        const saveButton = document.getElementById('saveButton');
+
+        if (!saveButton) {
+            console.error('Save button not found');
+            return;
+        }
+
+        const method = saveButton.getAttribute('data-method'); // Получаем метод из кнопки
+        const url = method === 'PUT' ? `/api/cars/${carNumber}` : '/api/cars';
+
+        const carData = {
+            carNumber: carNumber,
+            model: document.getElementById('model').value,
+            color: document.getElementById('color').value,
+            productionYear: document.getElementById('productionYear').value,
+            driver: {
+                id: document.getElementById('driverId').value
+            },
+            carCategory: {
+                id: document.getElementById('categoryId').value
+            }
+        };
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(carData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        console.error('Server response:', err);
+                        throw new Error('Error saving car: ' + err.message);
+                    });
+                }
+                return response.json();
+            })
+            .then(() => {
+                fetchCars();
+                clearForm();
+                const carModal = bootstrap.Modal.getInstance(document.getElementById('carModal'));
+                carModal.hide();
+            })
+            .catch(error => console.error('Error saving car:', error));
+    }
+
+
+
+    function deleteCar(carNumber) {
+if (confirm('Are you sure you want to delete this car?')) {
+fetch(`/api/cars/${carNumber}`, {
+method: 'DELETE'
+})
+.then(() => fetchCars())
+.catch(error => console.error('Error deleting car:', error));
+}
+}
+
+function clearForm() {
+document.getElementById('carForm').reset();
+document.getElementById('carNumber').removeAttribute('readonly')
+document.getElementById('carNumber').value = '';
+}
+</script>
+</body>
+</html>

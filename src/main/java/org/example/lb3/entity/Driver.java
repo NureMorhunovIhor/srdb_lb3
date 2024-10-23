@@ -1,14 +1,17 @@
 package org.example.lb3.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Nationalized;
 
 import java.sql.Date;
-import java.time.LocalDate;
 import java.util.List;
 
 @Entity
+@Table (name = "Driver")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Driver {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,8 +55,8 @@ public class Driver {
     private Date birthDate;
 
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonBackReference
     private List<Order> orders;
+
 
     public List<Order> getOrders() {
         return orders;

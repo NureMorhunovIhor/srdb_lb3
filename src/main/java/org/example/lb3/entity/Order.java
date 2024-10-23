@@ -1,18 +1,16 @@
 package org.example.lb3.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Nationalized;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "Orders")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,18 +44,16 @@ public class Order {
     private LocalDateTime preferredDatetime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "Passenger_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    @JsonManagedReference
-    private Passenger passenger;
+    @JoinColumn(name = "Driver_id")
+    private Driver driver;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "Driver_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    @JsonManagedReference
-    private Driver driver;
+    @JoinColumn(name = "Passenger_id")
+    private Passenger passenger;
+
+    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference
+    private List<Review> reviews;
 
     @Nationalized
     @Column(name = "Description", length = 100)
@@ -91,8 +87,9 @@ public class Order {
         return creationDatetime;
     }
 
-    public void setCreationDatetime(LocalDateTime creationDatetime) {
+    public LocalDateTime setCreationDatetime(LocalDateTime creationDatetime) {
         this.creationDatetime = creationDatetime;
+        return creationDatetime;
     }
 
     public Double getPrice() {

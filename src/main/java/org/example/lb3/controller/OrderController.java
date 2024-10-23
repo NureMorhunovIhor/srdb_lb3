@@ -1,6 +1,5 @@
 package org.example.lb3.controller;
 
-import org.example.lb3.entity.Car;
 import org.example.lb3.entity.Driver;
 import org.example.lb3.entity.Order;
 import org.example.lb3.entity.Passenger;
@@ -9,16 +8,14 @@ import org.example.lb3.repository.OrderRepository;
 import org.example.lb3.repository.PassengerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Controller
-@RequestMapping("/orders")
+@RestController
+@RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderRepository orderRepository;
@@ -26,67 +23,95 @@ public class OrderController {
     private final PassengerRepository passengerRepository;
 
     @Autowired
-    public OrderController(OrderRepository orderRepository,
-                           DriverRepository driverRepository,
-                           PassengerRepository passengerRepository) {
+    public OrderController(OrderRepository orderRepository, DriverRepository driverRepository, PassengerRepository passengerRepository) {
         this.orderRepository = orderRepository;
         this.driverRepository = driverRepository;
         this.passengerRepository = passengerRepository;
     }
 
     @GetMapping
-    public String getOrders(Model model) {
-        List<Order> orders = (List<Order>) orderRepository.findAll();
-        model.addAttribute("orders", orders);
-        model.addAttribute("drivers", driverRepository.findAll());
-        model.addAttribute("passengers", passengerRepository.findAll());
-        return "order-list";
+    public List<Order> getOrders() {
+        return orderRepository.findAll();
     }
 
-    @PostMapping("/add")
-    public String addOrder(@ModelAttribute Order order,
-                           @RequestParam Integer driverId,
-                           @RequestParam Integer passengerId) {
-        Optional<Driver> driver = driverRepository.findById(driverId);
-        Optional<Passenger> passenger = passengerRepository.findById(passengerId);
-
-        driver.ifPresent(order::setDriver);
-        passenger.ifPresent(order::setPassenger);
-
-        order.setCreationDatetime(LocalDateTime.now());
-        orderRepository.save(order);
-        return "redirect:/orders";
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> getOrder(@PathVariable Integer id) {
+        return orderRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/edit/{id}")
-    @ResponseBody
-    public ResponseEntity<?> getOrderJson(@PathVariable Integer id) {
-        Optional<Order> order = Optional.of(orderRepository.findById(id).get());
-        return ResponseEntity.ok(order.get());
-    }
+    @PostMapping(consumes = {"application/json"})
+    public ResponseEntity<Order> addOrder(@RequestBody Order newOrder) {
+        Optional<Driver> driver = driverRepository.findById(newOrder.getDriver().getId());
+        Optional<Passenger> passenger = passengerRepository.findById(newOrder.getPassenger().getId());
 
-    @PostMapping("/edit/{id}")
-    public String editOrder(@PathVariable Integer id,
-                            @ModelAttribute Order order,
-                            @RequestParam Integer driverId,
-                            @RequestParam Integer passengerId) {
-        Optional<Order> existingOrder = orderRepository.findById(id);
-        Optional<Driver> driver = driverRepository.findById(driverId);
-        Optional<Passenger> passenger = passengerRepository.findById(passengerId);
-
-        if (existingOrder.isPresent()) {
-            order.setId(id);
-            driver.ifPresent(order::setDriver);
-            passenger.ifPresent(order::setPassenger);
-            order.setCreationDatetime(LocalDateTime.now());
-            orderRepository.save(order);
+        if (driver.isPresent() && passenger.isPresent()) {
+            newOrder.setDriver(driver.get());
+            newOrder.setPassenger(passenger.get());
+        } else {
+            return ResponseEntity.badRequest().build();
         }
-        return "redirect:/orders";
+        newOrder.setCreationDatetime(LocalDateTime.now());
+        Order order = orderRepository.save(newOrder);
+        return ResponseEntity.ok(order);
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteOrder(@PathVariable Integer id) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Order> updateOrder(@PathVariable Integer id, @RequestBody Order updatedOrder) {
+        if (!orderRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Optional<Order> existingOrderOptional = orderRepository.findById(id);
+        if (existingOrderOptional.isPresent()) {
+            Order existingOrder = existingOrderOptional.get();
+
+            // Обновление водителя
+            if (updatedOrder.getDriver() != null && updatedOrder.getDriver().getId() != null) {
+                Optional<Driver> driverOpt = driverRepository.findById(updatedOrder.getDriver().getId());
+                if (driverOpt.isPresent()) {
+                    existingOrder.setDriver(driverOpt.get());
+                } else {
+                    return ResponseEntity.badRequest().body(null); // Водитель не найден
+                }
+            }
+
+            // Обновление пассажира
+            if (updatedOrder.getPassenger() != null && updatedOrder.getPassenger().getId() != null) {
+                Optional<Passenger> passengerOpt = passengerRepository.findById(updatedOrder.getPassenger().getId());
+                if (passengerOpt.isPresent()) {
+                    existingOrder.setPassenger(passengerOpt.get());
+                } else {
+                    return ResponseEntity.badRequest().body(null);
+                }
+            }
+
+            existingOrder.setAdressFrom(updatedOrder.getAdressFrom());
+            existingOrder.setAdressTo(updatedOrder.getAdressTo());
+            existingOrder.setPrice(updatedOrder.getPrice());
+            existingOrder.setOrderState(updatedOrder.getOrderState());
+            existingOrder.setLuggageWeight(updatedOrder.getLuggageWeight());
+            existingOrder.setPreferredDatetime(updatedOrder.setCreationDatetime(LocalDateTime.now()));
+            existingOrder.setDescription(updatedOrder.getDescription());
+
+            // Сохраняем обновленный заказ
+            Order savedOrder = orderRepository.save(existingOrder);
+            return ResponseEntity.ok(savedOrder);
+        }
+
+        return ResponseEntity.notFound().build();
+    }
+
+
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Integer id) {
+        if (!orderRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         orderRepository.deleteById(id);
-        return "redirect:/orders";
+        return ResponseEntity.noContent().build();
     }
 }

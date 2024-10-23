@@ -18,7 +18,7 @@
 
 <div class="table-responsive">
   <table class="table table-bordered table-striped">
-    <thead  class="table-dark">
+    <thead class="table-dark">
     <tr>
       <th>ID</th>
       <th>First Name</th>
@@ -34,28 +34,8 @@
       <th>Actions</th>
     </tr>
     </thead>
-    <tbody>
-    <tr th:each="driver : ${drivers}">
-      <td th:text="${driver.id}"></td>
-      <td th:text="${driver.firstName}"></td>
-      <td th:text="${driver.lastName}"></td>
-      <td th:text="${driver.middleName}"></td>
-      <td th:text="${driver.phoneNumber}"></td>
-      <td th:text="${driver.city}"></td>
-      <td th:text="${driver.rating}"></td>
-      <td th:text="${driver.drivingExpirience}"></td>
-      <td th:text="${driver.registrationDate}"></td>
-      <td th:text="${driver.email}"></td>
-      <td th:text="${driver.birthDate}"></td>
-      <td>
-        <a href="#" class="btn btn-warning" th:attr="data-driver-id=${driver.id}" onclick="openModal(this.getAttribute('data-driver-id')); return false;">
-          Edit
-        </a>
-        <a th:href="@{/drivers/delete/{id}(id=${driver.id})}"
-           onclick="return confirm('Are you sure you want to delete this driver?');"
-           class="btn btn-danger">Delete</a>
-      </td>
-    </tr>
+    <tbody id="driversTableBody">
+    <!-- Данные водителей будут загружаться динамически через JavaScript -->
     </tbody>
   </table>
 </div>
@@ -64,7 +44,7 @@
 <div class="modal fade" id="driverModal" tabindex="-1" aria-labelledby="driverModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="driverForm" th:action="@{/drivers/save}" method="post">
+      <form id="driverForm" onsubmit="return false;">
         <div class="modal-header">
           <h5 class="modal-title" id="driverModalLabel">Add Driver</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -115,7 +95,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Save Driver</button>
+          <button type="button" class="btn btn-primary" onclick="saveDriver()">Save Driver</button>
         </div>
       </form>
     </div>
@@ -145,14 +125,81 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 <script>
-  function openModal(id) {
-    fetch(`/drivers/${id}`)
+  // Функция для загрузки водителей
+  function loadDrivers() {
+    fetch('/api/drivers')
+            .then(response => response.json())
+            .then(drivers => {
+              const driversTableBody = document.getElementById('driversTableBody');
+              driversTableBody.innerHTML = '';
+              drivers.forEach(driver => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${driver.id}</td>
+            <td>${driver.firstName}</td>
+            <td>${driver.lastName}</td>
+            <td>${driver.middleName}</td>
+            <td>${driver.phoneNumber}</td>
+            <td>${driver.city}</td>
+            <td>${driver.rating}</td>
+            <td>${driver.drivingExpirience}</td>
+            <td>${driver.registrationDate}</td>
+            <td>${driver.email}</td>
+            <td>${driver.birthDate}</td>
+            <td>
+              <button class="btn btn-warning" onclick="editDriver(${driver.id})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteDriver(${driver.id})">Delete</button>
+            </td>
+          `;
+                driversTableBody.appendChild(row);
+              });
+            });
+  }
+
+  const driverModal = new bootstrap.Modal(document.getElementById('driverModal'));
+
+  // Функция для сохранения или обновления водителя
+  function saveDriver() {
+    const id = document.getElementById('driverId').value;
+    const url = id ? `/api/drivers/${id}` : '/api/drivers';
+    const method = id ? 'PUT' : 'POST';
+
+    const driverData = {
+      firstName: document.getElementById('firstName').value,
+      lastName: document.getElementById('lastName').value,
+      middleName: document.getElementById('middleName').value,
+      phoneNumber: document.getElementById('phoneNumber').value,
+      city: document.getElementById('city').value,
+      rating: document.getElementById('rating').value,
+      drivingExpirience: document.getElementById('drivingExpirience').value,
+      registrationDate: document.getElementById('registrationDate').value,
+      email: document.getElementById('email').value,
+      birthDate: document.getElementById('birthDate').value,
+    };
+
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(driverData),
+    })
             .then(response => {
-              if (!response.ok) throw new Error('Driver not found or server error');
-              return response.json();
-            })
+              if (response.ok) {
+                loadDrivers();
+                driverModal.hide();
+              } else {
+                alert('Error saving driver');
+              }
+            });
+  }
+
+  // Функция для редактирования водителя
+  function editDriver(id) {
+    fetch(`/api/drivers/${id}`)
+            .then(response => response.json())
             .then(driver => {
               document.getElementById('driverId').value = driver.id;
               document.getElementById('firstName').value = driver.firstName;
@@ -166,29 +213,48 @@
               document.getElementById('email').value = driver.email;
               document.getElementById('birthDate').value = driver.birthDate;
 
-              document.getElementById('driverModalLabel').innerText = 'Edit Driver';
-              const modal = new bootstrap.Modal(document.getElementById('driverModal'));
-              modal.show();
-            })
-            .catch(error => alert(error.message));
+              driverModal.show();
+            });
   }
 
+  // Функция для удаления водителя
+  function deleteDriver(id) {
+    if (confirm('Are you sure you want to delete this driver?')) {
+      fetch(`/api/drivers/${id}`, {
+        method: 'DELETE',
+      }).then(response => {
+        if (response.ok) {
+          loadDrivers();
+        } else {
+          alert('Error deleting driver');
+        }
+      });
+    }
+  }
+
+  // Функция для очистки формы
   function clearForm() {
     document.getElementById('driverForm').reset();
-    document.getElementById('driverId').value = "";
-    document.getElementById('driverModalLabel').innerText = 'Add Driver';
+    document.getElementById('driverId').value = '';
   }
 
+  // Функция для получения количества водителей по городу
   function getDriverCountByCity() {
-    const city = document.getElementById('cityInput').value;
-
-    fetch(`/drivers/countByCity?city=${city}`)
+    const city = document.getElementById('cityInput').value.trim();
+    if (!city) {
+      alert('Please enter a city name.');
+      return;
+    }
+    fetch(`/api/drivers/count?city=${city}`)
             .then(response => response.json())
-            .then(data => {
-              document.getElementById('driverCountResult').innerText = `Drivers in ${city}: ${data.count}`;
-            })
-            .catch(error => alert('Error: ' + error.message));
+            .then(count => {
+              document.getElementById('driverCountResult').innerText = `Driver count in ${city}: ${count}`;
+            });
   }
+
+
+  // Загрузка водителей при загрузке страницы
+  document.addEventListener('DOMContentLoaded', loadDrivers);
 </script>
 </body>
 </html>

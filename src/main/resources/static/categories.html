@@ -15,7 +15,7 @@
 </button>
 
 <div class="table-responsive mt-3">
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped" id="categoriesTable">
         <thead class="table-dark">
         <tr>
             <th>ID</th>
@@ -26,23 +26,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="category : ${carCategories}">
-            <td th:text="${category.id}"></td>
-            <td th:text="${category.categoryName}"></td>
-            <td th:text="${category.maxPassengersNumber}"></td>
-            <td th:text="${category.kilometerPrice}"></td>
-            <td>
-                <a href="#" class="btn btn-warning" th:attr="data-category-id=${category.id}"
-                   onclick="populateCategoryModal(this.getAttribute('data-category-id')); return false;">
-                    Edit
-                </a>
-                <a th:href="@{/categories/delete/{id}(id=${category.id})}"
-                   class="btn btn-danger"
-                   onclick="return confirm('Are you sure you want to delete this category?');">
-                    Delete
-                </a>
-            </td>
-        </tr>
+        <!-- Данные будут загружены через JavaScript -->
         </tbody>
     </table>
 </div>
@@ -51,13 +35,13 @@
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="categoryForm" th:action="@{/categories/add}" method="post">
+            <form id="categoryForm">
                 <div class="modal-header">
                     <h5 class="modal-title" id="categoryModalLabel">Create New Category</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                        <input type="hidden" id="categoryId" name="id">
+                    <input type="hidden" id="categoryId" name="id">
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Category Name</label>
                         <input type="text" class="form-control" id="categoryName" name="categoryName" required>
@@ -81,12 +65,74 @@
 </div>
 
 <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        loadCategories();
+
+        document.getElementById('categoryForm').onsubmit = function(event) {
+            event.preventDefault();
+            const categoryId = document.getElementById('categoryId').value;
+            const method = categoryId ? 'PUT' : 'POST';
+            const url = categoryId ? `/api/categories/${categoryId}` : '/api/categories';
+
+            const categoryData = {
+                categoryName: document.getElementById('categoryName').value,
+                maxPassengersNumber: document.getElementById('maxPassengersNumber').value,
+                kilometerPrice: document.getElementById('kilometerPrice').value
+            };
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(categoryData)
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error saving category');
+                    return response.json();
+                })
+                .then(() => {
+                    loadCategories();
+                    clearCategoryForm();
+                    const categoryModal = bootstrap.Modal.getInstance(document.getElementById('categoryModal'));
+                    if (categoryModal) {
+                        categoryModal.hide();
+                    }
+                })
+                .catch(error => {
+                    alert(error.message);
+                    console.error('Error:', error);
+                });
+        };
+    });
+
+    function loadCategories() {
+        fetch('/api/categories')
+            .then(response => response.json())
+            .then(categories => {
+                const tbody = document.querySelector('#categoriesTable tbody');
+                tbody.innerHTML = ''; // Очистка текущих данных
+                categories.forEach(category => {
+                    const row = `<tr>
+                        <td>${category.id}</td>
+                        <td>${category.categoryName}</td>
+                        <td>${category.maxPassengersNumber}</td>
+                        <td>${category.kilometerPrice}</td>
+                        <td>
+                            <a href="#" class="btn btn-warning" onclick="populateCategoryModal(${category.id}); return false;">Edit</a>
+                            <a href="#" class="btn btn-danger" onclick="deleteCategory(${category.id}); return false;">Delete</a>
+                        </td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Error loading categories:', error));
+    }
+
     function populateCategoryModal(categoryId) {
-        fetch(`/categories/edit/${categoryId}`)
+        fetch(`/api/categories/${categoryId}`)
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Category not found or server error');
-                }
+                if (!response.ok) throw new Error('Category not found');
                 return response.json();
             })
             .then(category => {
@@ -102,6 +148,22 @@
                 alert(error.message);
                 console.error('Error:', error);
             });
+    }
+
+    function deleteCategory(categoryId) {
+        if (confirm('Are you sure you want to delete this category?')) {
+            fetch(`/api/categories/${categoryId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error deleting category');
+                    loadCategories();
+                })
+                .catch(error => {
+                    alert(error.message);
+                    console.error('Error:', error);
+                });
+        }
     }
 
     function clearCategoryForm() {

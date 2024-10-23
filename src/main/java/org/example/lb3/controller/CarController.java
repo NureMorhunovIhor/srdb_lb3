@@ -8,15 +8,13 @@ import org.example.lb3.repository.CarRepository;
 import org.example.lb3.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-@Controller
-@RequestMapping("/cars")
+@RestController
+@RequestMapping("/api/cars")
 public class CarController {
 
     private final CarRepository carRepository;
@@ -30,70 +28,100 @@ public class CarController {
         this.carCategoryRepository = carCategoryRepository;
     }
 
-    // Получить все машины
-    @GetMapping("/all")
-    public String getAllCars(Model model) {
-        List<Car> cars = carRepository.findAll();
-        List<Driver> drivers = (List<Driver>) driverRepository.findAll();
-        List<CarCategory> carCategories = carCategoryRepository.findAll();
-
-        // Логируем данные
-        System.out.println("Cars: " + cars);
-        System.out.println("Drivers: " + drivers);
-        System.out.println("Car Categories: " + carCategories);
-
-        model.addAttribute("cars", cars);
-        model.addAttribute("drivers", drivers);
-        model.addAttribute("carCategories", carCategories);
-        return "carDetails";
+    @GetMapping
+    public List<Car> getAllCars() {
+        return carRepository.findAll();
     }
 
-    @PostMapping("/add")
-    public String addCar(@RequestParam Integer driverId, @RequestParam Integer carCategoryId, @ModelAttribute Car newCar) {
-        Optional<Driver> driverOptional = driverRepository.findById(driverId);
-        Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(carCategoryId);
-
-        driverOptional.ifPresent(newCar::setDriver);
-        carCategoryOptional.ifPresent(newCar::setCarCategory);
-
-        carRepository.save(newCar);
-        return "redirect:/cars/all";
+    @GetMapping("/drivers")
+    public List<Driver> getAllDrivers() {
+        return (List<Driver>) driverRepository.findAll();
     }
 
+    @GetMapping("/categories")
+    public List<CarCategory> getAllCategories() {
+        return carCategoryRepository.findAll();
+    }
 
-    @GetMapping("/delete/{carNumber}")
-    public String deleteCar(@PathVariable String carNumber) {
+    @PostMapping
+    public ResponseEntity<Car> addCar(@RequestBody Car newCar) {
+
+        System.out.println("Received new car: " + newCar); // Отладка
+        if (newCar.getDriver() == null || newCar.getCarCategory() == null) {
+            System.out.println("Driver or Category is null");
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        Optional<Driver> driverOptional = driverRepository.findById(newCar.getDriver().getId());
+        Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(newCar.getCarCategory().getId());
+
+        if (!driverOptional.isPresent()) {
+            return ResponseEntity.badRequest().body(null); // Водитель не найден
+        }
+
+        if (!carCategoryOptional.isPresent()) {
+            return ResponseEntity.badRequest().body(null); // Категория не найдена
+        }
+
+        newCar.setDriver(driverOptional.get());
+        newCar.setCarCategory(carCategoryOptional.get());
+
+        Car savedCar = carRepository.save(newCar);
+        return ResponseEntity.ok(savedCar);
+    }
+
+    @DeleteMapping("/{carNumber}")
+    public ResponseEntity<Void> deleteCar(@PathVariable String carNumber) {
+        if (!carRepository.existsById(carNumber)) {
+            return ResponseEntity.notFound().build(); // Если машина не найдена
+        }
         carRepository.deleteById(carNumber);
-        return "redirect:/cars/all";
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/edit/{carNumber}")
-    @ResponseBody
-    public ResponseEntity<?> showEditForm(@PathVariable String carNumber) {
-        System.out.println("Received request for car number: " + carNumber);
-        Optional<Car> carOptional = Optional.of(carRepository.findById(carNumber).get());
-        System.out.println("Car found: " + carOptional.get());
-        return ResponseEntity.ok(carOptional.get());
+    @GetMapping("/{carNumber}")
+    public ResponseEntity<Car> getCar(@PathVariable String carNumber) {
+        return carRepository.findById(carNumber)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{carNumber}")
+    public ResponseEntity<Car> updateCar(@PathVariable String carNumber, @RequestBody Car updatedCar) {
+        if (!carRepository.existsById(carNumber)) {
+            return ResponseEntity.notFound().build();
+        }
 
-    @PostMapping("/edit/{carNumber}")
-    public String updateCar(@ModelAttribute Car updatedCar, @RequestParam Integer driverId, @RequestParam Integer carCategoryId) {
-        Optional<Car> existingCarOptional = carRepository.findById(updatedCar.getCarNumber());
-
+        Optional<Car> existingCarOptional = carRepository.findById(carNumber);
         if (existingCarOptional.isPresent()) {
             Car existingCar = existingCarOptional.get();
-            Optional<Driver> driverOptional = driverRepository.findById(driverId);
-            Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(carCategoryId);
+
+            if (updatedCar.getDriver() != null && updatedCar.getDriver().getId() != null) {
+                Optional<Driver> driverOpt = driverRepository.findById(updatedCar.getDriver().getId());
+                if (driverOpt.isPresent()) {
+                    existingCar.setDriver(driverOpt.get());
+                } else {
+                    return ResponseEntity.badRequest().body(null); // Водитель не найден
+                }
+            }
+
+            if (updatedCar.getCarCategory() != null && updatedCar.getCarCategory().getId() != null) {
+                Optional<CarCategory> categoryOpt = carCategoryRepository.findById(updatedCar.getCarCategory().getId());
+                if (categoryOpt.isPresent()) {
+                    existingCar.setCarCategory(categoryOpt.get());
+                } else {
+                    return ResponseEntity.badRequest().body(null); // Категория не найдена
+                }
+            }
 
             existingCar.setModel(updatedCar.getModel());
             existingCar.setColor(updatedCar.getColor());
             existingCar.setProductionYear(updatedCar.getProductionYear());
-            driverOptional.ifPresent(existingCar::setDriver);
-            carCategoryOptional.ifPresent(existingCar::setCarCategory);
-            carRepository.save(existingCar);
+
+            Car savedCar = carRepository.save(existingCar);
+            return ResponseEntity.ok(savedCar);
         }
 
-        return "redirect:/cars/all";
+        return ResponseEntity.notFound().build();
     }
 }

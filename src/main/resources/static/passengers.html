@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список пассажиров</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Список пассажиров</h1>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#passengerModal" onclick="clearForm();">
+        Добавить пассажира
+    </button>
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Имя</th>
+                <th>Фамилия</th>
+                <th>Телефон</th>
+                <th>Email</th>
+                <th>Дата рождения</th>
+                <th>Пол</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="passenger-table-body">
+            <!-- Данные будут динамически загружены сюда -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="passengerModal" tabindex="-1" aria-labelledby="passengerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="passengerForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="passengerModalLabel">Добавить пассажира</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="passengerId"/>
+
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="firstName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">Фамилия</label>
+                        <input type="text" class="form-control" id="lastName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Телефон</label>
+                        <input type="text" class="form-control" id="phoneNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="birthDate" class="form-label">Дата рождения</label>
+                        <input type="date" class="form-control" id="birthDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="gender" class="form-label">Пол</label>
+                        <select class="form-select" id="gender" required>
+                            <option value="MALE">Мужской</option>
+                            <option value="FEMALE">Женский</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" onclick="savePassenger()">Сохранить пассажира</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function fetchPassengers() {
+        const response = await fetch('/api/passengers');
+        const passengers = await response.json();
+        const tableBody = document.getElementById('passenger-table-body');
+        tableBody.innerHTML = '';
+
+        passengers.forEach(passenger => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${passenger.id}</td>
+                <td>${passenger.firstName}</td>
+                <td>${passenger.lastName}</td>
+                <td>${passenger.phoneNumber}</td>
+                <td>${passenger.email}</td>
+                <td>${new Date(passenger.birthDate).toLocaleDateString()}</td>
+                <td>${passenger.gender}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="openModal(${passenger.id})">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletePassenger(${passenger.id})">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    async function savePassenger() {
+        const passengerId = document.getElementById('passengerId').value;
+        const passengerData = {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            email: document.getElementById('email').value,
+            birthDate: document.getElementById('birthDate').value,
+            gender: document.getElementById('gender').value
+        };
+
+        const method = passengerId ? 'PUT' : 'POST';
+        const url = passengerId ? `/api/passengers/${passengerId}` : '/api/passengers';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type' : 'application/json' // Добавьте этот заголовок
+                },
+                body: JSON.stringify(passengerData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Ошибка при сохранении пассажира:', errorData);
+                throw new Error(`Ошибка: ${response.status}`);
+            }
+
+            document.querySelector('.btn-close').click(); // Закрываем модальное окно
+            fetchPassengers(); // Обновляем список пассажиров
+        } catch (error) {
+            console.error('Ошибка при сохранении пассажира:', error);
+        }
+    }
+
+
+    async function deletePassenger(id) {
+        if (confirm('Вы уверены, что хотите удалить пассажира?')) {
+            await fetch(`/api/passengers/${id}`, { method: 'DELETE' });
+            fetchPassengers();
+        }
+    }
+
+    async function openModal(id) {
+        const response = await fetch(`/api/passengers/${id}`);
+        const passenger = await response.json();
+
+        document.getElementById('passengerId').value = passenger.id;
+        document.getElementById('firstName').value = passenger.firstName;
+        document.getElementById('lastName').value = passenger.lastName;
+        document.getElementById('phoneNumber').value = passenger.phoneNumber;
+        document.getElementById('email').value = passenger.email;
+        document.getElementById('birthDate').value = passenger.birthDate;
+        document.getElementById('gender').value = passenger.gender;
+
+        const passengerModal = new bootstrap.Modal(document.getElementById('passengerModal'));
+        passengerModal.show();
+    }
+
+    function clearForm() {
+        document.getElementById('passengerId').value = '';
+        document.getElementById('firstName').value = '';
+        document.getElementById('lastName').value = '';
+        document.getElementById('phoneNumber').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('birthDate').value = '';
+        document.getElementById('gender').value = 'MALE';
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchPassengers);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js" defer></script>
+</body>
+</html>

@@ -2,12 +2,13 @@ package org.example.lb3.controller;
 
 import org.example.lb3.entity.CarCategory;
 import org.example.lb3.repository.CarCategoryRepository;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RequestMapping("/categories")
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/categories")
 public class CarCategoryController {
 
     private final CarCategoryRepository carCategoryRepository;
@@ -17,28 +18,43 @@ public class CarCategoryController {
     }
 
     @GetMapping
-    public String showCategories(Model model) {
-        model.addAttribute("carCategories", carCategoryRepository.findAll());
-        return "categories";
+    public List<CarCategory> getAllCategories() {
+        return carCategoryRepository.findAll();
     }
 
-    @PostMapping("/add")
-    public String addCategory(@ModelAttribute CarCategory category) {
-        carCategoryRepository.save(category);
-        return "redirect:/categories";
+    @PostMapping
+    public ResponseEntity<CarCategory> addCategory(@RequestBody CarCategory category) {
+        CarCategory savedCategory = carCategoryRepository.save(category);
+        return ResponseEntity.ok(savedCategory);
     }
 
-    @GetMapping("/edit/{id}")
-    @ResponseBody
-    public CarCategory getCategory(@PathVariable Integer id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<CarCategory> getCategory(@PathVariable Integer id) {
         return carCategoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteCategory(@PathVariable Integer id) {
-        carCategoryRepository.deleteById(id);
-        return "redirect:/categories";
+    @PutMapping("/{id}")
+    public ResponseEntity<CarCategory> updateCategory(@PathVariable Integer id, @RequestBody CarCategory category) {
+        return carCategoryRepository.findById(id)
+                .map(existingCategory -> {
+                    existingCategory.setCategoryName(category.getCategoryName());
+                    existingCategory.setMaxPassengersNumber(category.getMaxPassengersNumber());
+                    existingCategory.setKilometerPrice(category.getKilometerPrice());
+                    CarCategory updatedCategory = carCategoryRepository.save(existingCategory);
+                    return ResponseEntity.ok(updatedCategory);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Integer id) {
+        if (carCategoryRepository.existsById(id)) {
+            carCategoryRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
-

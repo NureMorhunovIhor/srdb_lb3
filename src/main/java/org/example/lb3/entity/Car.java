@@ -34,6 +34,7 @@ public class Car {
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "Car_category_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private CarCategory carCategory;
 
     public String getCarNumber() {
