@@ -169,8 +169,8 @@
                 document.getElementById('model').value = car.model;
                 document.getElementById('color').value = car.color;
                 document.getElementById('productionYear').value = car.productionYear;
-                document.getElementById('driverId').value = car.driver.id;
-                document.getElementById('categoryId').value = car.carCategory.id;
+                document.getElementById('driverId').value = car.driver ? car.driver.id : '';
+                document.getElementById('categoryId').value = car.carCategory ? car.carCategory.id : '';
 
                 document.getElementById('carNumber').setAttribute('readonly', true);
                 document.getElementById('carModalLabel').textContent = 'Edit Car';
@@ -230,6 +230,7 @@
                 if (!response.ok) {
                     return response.json().then(err => {
                         console.error('Server response:', err);
+                        alert('Error: ' + err.message);
                         throw new Error('Error saving car: ' + err.message);
                     });
                 }

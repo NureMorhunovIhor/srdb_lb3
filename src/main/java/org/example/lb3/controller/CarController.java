@@ -3,12 +3,16 @@ package org.example.lb3.controller;
 import org.example.lb3.entity.Car;
 import org.example.lb3.entity.CarCategory;
 import org.example.lb3.entity.Driver;
+import org.example.lb3.exception.ErrorResponse;
 import org.example.lb3.repository.CarCategoryRepository;
 import org.example.lb3.repository.CarRepository;
 import org.example.lb3.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.example.lb3.exception.CarAlreadyExistsException;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,29 +49,31 @@ public class CarController {
 
     @PostMapping
     public ResponseEntity<Car> addCar(@RequestBody Car newCar) {
-
-        System.out.println("Received new car: " + newCar); // Отладка
         if (newCar.getDriver() == null || newCar.getCarCategory() == null) {
-            System.out.println("Driver or Category is null");
             return ResponseEntity.badRequest().body(null);
         }
-
+        if (carRepository.existsById(newCar.getCarNumber())) {
+            throw new CarAlreadyExistsException(newCar.getCarNumber());
+        }
         Optional<Driver> driverOptional = driverRepository.findById(newCar.getDriver().getId());
         Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(newCar.getCarCategory().getId());
 
-        if (!driverOptional.isPresent()) {
-            return ResponseEntity.badRequest().body(null); // Водитель не найден
+        if (!driverOptional.isPresent() || !carCategoryOptional.isPresent()) {
+            return ResponseEntity.badRequest().body(null);
         }
-
-        if (!carCategoryOptional.isPresent()) {
-            return ResponseEntity.badRequest().body(null); // Категория не найдена
-        }
-
         newCar.setDriver(driverOptional.get());
         newCar.setCarCategory(carCategoryOptional.get());
 
         Car savedCar = carRepository.save(newCar);
         return ResponseEntity.ok(savedCar);
+
+    }
+
+
+    @ExceptionHandler(CarAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCarAlreadyExistsException(CarAlreadyExistsException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("CAR_ALREADY_EXISTS", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @DeleteMapping("/{carNumber}")
