@@ -7,23 +7,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
 </head>
 <body>
+<div class="list-group mt-4">
+    <a href="order-list.html" class="list-group-item list-group-item-action">Order List</a>
+    <a href="carDetails.html" class="list-group-item list-group-item-action">Car Details</a>
+    <a href="driver-list.html" class="list-group-item list-group-item-action">Driver List</a>
+    <a href="reviews-list.html" class="list-group-item list-group-item-action">Reviews</a>
+    <a href="index.html" class="list-group-item list-group-item-action">Navigation</a>
+</div>
 <div class="container mt-5">
-    <h1>Список пассажиров</h1>
+    <h1>Passengers List</h1>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#passengerModal" onclick="clearForm();">
-        Добавить пассажира
+        Add passenger
     </button>
     <div class="table-responsive mt-3">
         <table class="table table-bordered table-striped">
             <thead class="table-dark">
             <tr>
                 <th>ID</th>
-                <th>Имя</th>
-                <th>Фамилия</th>
-                <th>Телефон</th>
+                <th>Name</th>
+                <th>LastName</th>
+                <th>Phone Number</th>
                 <th>Email</th>
-                <th>Дата рождения</th>
-                <th>Пол</th>
-                <th>Действия</th>
+                <th>Birthdate</th>
+                <th>Gender</th>
+                <th>Actions</th>
             </tr>
             </thead>
             <tbody id="passenger-table-body">
@@ -38,22 +45,22 @@
         <div class="modal-content">
             <form id="passengerForm">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="passengerModalLabel">Добавить пассажира</h5>
+                    <h5 class="modal-title" id="passengerModalLabel">Add passenger</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="passengerId"/>
 
                     <div class="mb-3">
-                        <label for="firstName" class="form-label">Имя</label>
+                        <label for="firstName" class="form-label">Name</label>
                         <input type="text" class="form-control" id="firstName" required>
                     </div>
                     <div class="mb-3">
-                        <label for="lastName" class="form-label">Фамилия</label>
+                        <label for="lastName" class="form-label">LastName</label>
                         <input type="text" class="form-control" id="lastName" required>
                     </div>
                     <div class="mb-3">
-                        <label for="phoneNumber" class="form-label">Телефон</label>
+                        <label for="phoneNumber" class="form-label">PhoneNumber</label>
                         <input type="text" class="form-control" id="phoneNumber" required>
                     </div>
                     <div class="mb-3">
@@ -61,20 +68,20 @@
                         <input type="email" class="form-control" id="email" required>
                     </div>
                     <div class="mb-3">
-                        <label for="birthDate" class="form-label">Дата рождения</label>
+                        <label for="birthDate" class="form-label">BirthDate</label>
                         <input type="date" class="form-control" id="birthDate" required>
                     </div>
                     <div class="mb-3">
-                        <label for="gender" class="form-label">Пол</label>
+                        <label for="gender" class="form-label">Gender</label>
                         <select class="form-select" id="gender" required>
-                            <option value="MALE">Мужской</option>
-                            <option value="FEMALE">Женский</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                    <button type="button" class="btn btn-primary" onclick="savePassenger()">Сохранить пассажира</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="savePassenger()">Save Passenger</button>
                 </div>
             </form>
         </div>
