@@ -20,6 +20,10 @@
   Add New Order
 </button>
 
+<button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#mostExpensiveOrderOnDateModal">
+  Get Most Expensive Order On Date
+</button>
+
 <div class="table-responsive">
   <table class="table table-bordered table-striped" id="ordersTable">
     <thead class="table-dark">
@@ -96,6 +100,45 @@
           <button type="submit" class="btn btn-primary" id="saveButton">Save changes</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно для запроса количества водителей по городу -->
+<div class="modal fade" id="mostExpensiveOrderOnDateModal" tabindex="-1" aria-labelledby="mostExpensiveOrderOnDateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mostExpensiveOrderOnDateModalLabel">Get Most Expensive Order On Date</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="dateInput" class="form-label">Enter Date</label>
+          <input type="date" class="form-control" id="dateInput" required>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped d-none" id="orderResult">
+            <thead class="table-dark">
+            <tr>
+              <th>Order ID</th>
+              <th>Address From</th>
+              <th>Address To</th>
+              <th>Price</th>
+              <th>Creation Date</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Order data will be loaded via JavaScript -->
+            </tbody>
+          </table>
+          <h5 class="form-label d-none" id="noOrdersMessage">No orders found for this date.</h5>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="getMostExpensiveOrderOnDate()">Get Order</button>
+      </div>
     </div>
   </div>
 </div>
@@ -271,6 +314,43 @@
     document.getElementById('orderForm').reset();
     document.getElementById('orderId').removeAttribute('readonly');
   }
+
+  function getMostExpensiveOrderOnDate() {
+    const date = document.getElementById('dateInput').value.trim();
+    if (!date) {
+      alert('Please enter date.');
+      return;
+    }
+    fetch(`/api/orders/most-expensive?date=${date}`)
+            .then(response => response.json())
+            .then(orders => {
+              let tableBody = document.querySelector('#orderResult tbody');
+              tableBody.innerHTML = '';
+              console.log(orders);
+              if (orders.length > 0) {
+                // Видаляємо клас d-none, щоб зробити таблицю видимою
+                document.getElementById('noOrdersMessage').classList.add('d-none');
+                document.getElementById('orderResult').classList.remove('d-none');
+
+                orders.forEach(order => {
+                  const row = document.createElement('tr');
+                  row.innerHTML = `
+                        <td>${order.id}</td>
+                        <td>${order.adressFrom}</td>
+                        <td>${order.adressTo}</td>
+                        <td>${order.price}</td>
+                        <td>${order.creationDatetime}</td>
+                    `;
+                  tableBody.appendChild(row);
+                });
+              } else {
+                document.getElementById('orderResult').classList.add('d-none');
+                document.getElementById('noOrdersMessage').classList.remove('d-none');
+              }
+            })
+            .catch(error => console.error('Error fetching orders:', error));
+  }
+
 </script>
 </body>
 </html>

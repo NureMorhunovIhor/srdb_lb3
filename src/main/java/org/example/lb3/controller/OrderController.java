@@ -6,10 +6,13 @@ import org.example.lb3.entity.Passenger;
 import org.example.lb3.repository.DriverRepository;
 import org.example.lb3.repository.OrderRepository;
 import org.example.lb3.repository.PassengerRepository;
+import org.example.lb3.dto.MostExpensiveOrderOnDateDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -103,7 +106,12 @@ public class OrderController {
         return ResponseEntity.notFound().build();
     }
 
-
+    @GetMapping("/most-expensive")
+    public ResponseEntity<List<MostExpensiveOrderOnDateDTO>> getMostExpensiveOrderOnDate(
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<MostExpensiveOrderOnDateDTO> result = orderRepository.findMostExpensiveOrderOnDate(date.toString());
+        return ResponseEntity.ok(result);
+    }
 
 
     @DeleteMapping("/{id}")
