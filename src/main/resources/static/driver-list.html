@@ -92,7 +92,7 @@
           </div>
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <input type="email" class="form-control" id="email" name="email">
           </div>
           <div class="mb-3">
             <label for="birthDate" class="form-label">Birth Date</label>
@@ -152,7 +152,7 @@
             <td>${driver.rating}</td>
             <td>${driver.drivingExpirience}</td>
             <td>${driver.registrationDate}</td>
-            <td>${driver.email}</td>
+            <td>${driver.email ? driver.email : "No email"}</td>
             <td>${driver.birthDate}</td>
             <td>
               <button class="btn btn-warning" onclick="editDriver(${driver.id})">Edit</button>

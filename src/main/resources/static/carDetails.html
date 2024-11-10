@@ -23,6 +23,11 @@
 <button type="button" class="btn btn-secondary" onclick="window.location.href='/categories.html';">
     Categories
 </button>
+
+<button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addCarProcedure">
+    Add Car Procedure
+</button>
+
 <div class="table-responsive">
     <table class="table table-bordered table-striped" id="carsTable">
         <thead class="table-dark">
@@ -72,7 +77,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="driverId" class="form-label">Driver</label>
-                        <select class="form-select" id="driverId" name="driverId" required>
+                        <select class="form-select" id="driverId" name="driverId">
                             <option th:each="driver : ${drivers}" th:value="${driver.id}" th:text="${driver.firstName} + ' ' + ${driver.lastName}"></option>
                         </select>
                     </div>
@@ -107,6 +112,13 @@
             .then(drivers => {
                 const driverSelect = document.getElementById('driverId');
                 driverSelect.innerHTML = '';
+
+                // Додаємо опцію з пустим значенням
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a driver';
+                driverSelect.appendChild(defaultOption);
+
                 drivers.forEach(driver => {
                     const option = document.createElement('option');
                     option.value = driver.id;
@@ -206,19 +218,22 @@
         const method = saveButton.getAttribute('data-method'); // Получаем метод из кнопки
         const url = method === 'PUT' ? `/api/cars/${carNumber}` : '/api/cars';
 
+        const driverId = document.getElementById('driverId').value;
+        console.log(driverId);
         const carData = {
             carNumber: carNumber,
             model: document.getElementById('model').value,
             color: document.getElementById('color').value,
             productionYear: document.getElementById('productionYear').value,
             driver: {
-                id: document.getElementById('driverId').value
+                id: driverId ? driverId : null,
             },
             carCategory: {
                 id: document.getElementById('categoryId').value
             }
         };
-
+        console.log(carData.driver);
+        console.log(JSON.stringify(carData));
         fetch(url, {
             method: method,
             headers: {
