@@ -49,20 +49,29 @@ public class CarController {
 
     @PostMapping
     public ResponseEntity<Car> addCar(@RequestBody Car newCar) {
-        if (newCar.getDriver() == null || newCar.getCarCategory() == null) {
-            return ResponseEntity.badRequest().body(null);
-        }
         if (carRepository.existsById(newCar.getCarNumber())) {
             throw new CarAlreadyExistsException(newCar.getCarNumber());
         }
-        Optional<Driver> driverOptional = driverRepository.findById(newCar.getDriver().getId());
-        Optional<CarCategory> carCategoryOptional = carCategoryRepository.findById(newCar.getCarCategory().getId());
 
-        if (!driverOptional.isPresent() || !carCategoryOptional.isPresent()) {
-            return ResponseEntity.badRequest().body(null);
+        // Check if driver is provided, and set it if it exists
+        if (newCar.getDriver() != null && newCar.getDriver().getId() != null) {
+            Optional<Driver> driverOptional = driverRepository.findById(newCar.getDriver().getId());
+            if (driverOptional.isPresent()) {
+                newCar.setDriver(driverOptional.get());
+            } else {
+                return ResponseEntity.badRequest().body(null); // Driver not found
+            }
+        } else {
+            newCar.setDriver(null); // Set driver to null if not provided
         }
-        newCar.setDriver(driverOptional.get());
-        newCar.setCarCategory(carCategoryOptional.get());
+
+        // Check if car category is provided and exists
+        if (newCar.getCarCategory() == null || newCar.getCarCategory().getId() == null ||
+                !carCategoryRepository.existsById(newCar.getCarCategory().getId())) {
+            return ResponseEntity.badRequest().body(null); // Category not found or missing
+        }
+
+        newCar.setCarCategory(carCategoryRepository.findById(newCar.getCarCategory().getId()).get());
 
         Car savedCar = carRepository.save(newCar);
         return ResponseEntity.ok(savedCar);
@@ -99,35 +108,53 @@ public class CarController {
         }
 
         Optional<Car> existingCarOptional = carRepository.findById(carNumber);
-        if (existingCarOptional.isPresent()) {
-            Car existingCar = existingCarOptional.get();
-
-            if (updatedCar.getDriver() != null && updatedCar.getDriver().getId() != null) {
-                Optional<Driver> driverOpt = driverRepository.findById(updatedCar.getDriver().getId());
-                if (driverOpt.isPresent()) {
-                    existingCar.setDriver(driverOpt.get());
-                } else {
-                    return ResponseEntity.badRequest().body(null); // Водитель не найден
-                }
-            }
-
-            if (updatedCar.getCarCategory() != null && updatedCar.getCarCategory().getId() != null) {
-                Optional<CarCategory> categoryOpt = carCategoryRepository.findById(updatedCar.getCarCategory().getId());
-                if (categoryOpt.isPresent()) {
-                    existingCar.setCarCategory(categoryOpt.get());
-                } else {
-                    return ResponseEntity.badRequest().body(null); // Категория не найдена
-                }
-            }
-
-            existingCar.setModel(updatedCar.getModel());
-            existingCar.setColor(updatedCar.getColor());
-            existingCar.setProductionYear(updatedCar.getProductionYear());
-
-            Car savedCar = carRepository.save(existingCar);
-            return ResponseEntity.ok(savedCar);
+        if (!existingCarOptional.isPresent()) {
+            return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.notFound().build();
+        Car existingCar = existingCarOptional.get();
+
+        // Check if driver is provided in the update
+        if (updatedCar.getDriver() != null && updatedCar.getDriver().getId() != null) {
+            Optional<Driver> driverOpt = driverRepository.findById(updatedCar.getDriver().getId());
+            if (driverOpt.isPresent()) {
+                existingCar.setDriver(driverOpt.get());
+            } else {
+                return ResponseEntity.badRequest().body(null); // Водитель не найден
+            }
+        } else {
+            existingCar.setDriver(null); // Set driver to null if not provided in update
+        }
+
+        if (updatedCar.getCarCategory() != null && updatedCar.getCarCategory().getId() != null) {
+            Optional<CarCategory> categoryOpt = carCategoryRepository.findById(updatedCar.getCarCategory().getId());
+            if (categoryOpt.isPresent()) {
+                existingCar.setCarCategory(categoryOpt.get());
+            } else {
+                return ResponseEntity.badRequest().body(null); // Категория не найдена
+            }
+        }
+
+        existingCar.setModel(updatedCar.getModel());
+        existingCar.setColor(updatedCar.getColor());
+        existingCar.setProductionYear(updatedCar.getProductionYear());
+
+        Car savedCar = carRepository.save(existingCar);
+        return ResponseEntity.ok(savedCar);
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addCarUsingProcedure( @RequestParam String model,
+                                                        @RequestParam Integer productionYear,
+                                                        @RequestParam String categoryName,
+                                                        @RequestParam(defaultValue = "Black") String color,
+                                                        @RequestParam(required = false) String carNumber) {
+        try {
+            String generatedCarNumber = carRepository.addCar(model, productionYear, categoryName, color, carNumber);
+            return ResponseEntity.ok("Car added successfully with number: " + generatedCarNumber);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("An error occurred while adding the car.");
+        }
     }
 }
