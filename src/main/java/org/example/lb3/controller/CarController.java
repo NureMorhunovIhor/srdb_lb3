@@ -142,4 +142,19 @@ public class CarController {
         Car savedCar = carRepository.save(existingCar);
         return ResponseEntity.ok(savedCar);
     }
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addCarUsingProcedure( @RequestParam String model,
+                                                        @RequestParam Integer productionYear,
+                                                        @RequestParam String categoryName,
+                                                        @RequestParam(defaultValue = "Black") String color,
+                                                        @RequestParam(required = false) String carNumber) {
+        try {
+            String generatedCarNumber = carRepository.addCar(model, productionYear, categoryName, color, carNumber);
+            return ResponseEntity.ok("Car added successfully with number: " + generatedCarNumber);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("An error occurred while adding the car.");
+        }
+    }
 }

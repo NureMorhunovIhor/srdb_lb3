@@ -3,7 +3,10 @@ package org.example.lb3.repository;
 import org.example.lb3.entity.Car;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,6 +20,11 @@ public interface CarRepository extends JpaRepository<Car, String> {
             "LEFT JOIN Driver d ON c.Driver_id = d.Driver_id",
             nativeQuery = true)
     List<Object[]> findAllCarsWithCategory();
+
+    @Procedure(procedureName = "AddCar")
+    String addCar(@Param("Model") String model,
+                @Param("Production_year") Integer productionYear,
+                @Param("Category_name") String categoryName,
+                @Param("Color") String color,
+                @Param("Car_number") String carNumber);
 }
-
-
