@@ -6,14 +6,31 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css"/>
 </head>
 <body>
-<h1>Drivers List</h1>
-<div class="list-group mt-4">
-  <a href="order-list.html" class="list-group-item list-group-item-action">Order List</a>
-  <a href="carDetails.html" class="list-group-item list-group-item-action">Car Details</a>
-  <a href="reviews-list.html" class="list-group-item list-group-item-action">Reviews</a>
-  <a href="passengers.html" class="list-group-item list-group-item-action">Passengers</a>
-  <a href="index.html" class="list-group-item list-group-item-action">Navigation</a>
-</div>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Driver Management</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="order-list.html">Order List</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="reviews-list.html">Reviews</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="carDetails.html">Cars</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="passengers.html">Passengers</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="index.html">Navigation</a>
+      </li>
+    </ul>
+  </div>
+</nav>
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#driverModal" onclick="clearForm();">
   Add New Driver
 </button>
