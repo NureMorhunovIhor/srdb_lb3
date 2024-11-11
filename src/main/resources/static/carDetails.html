@@ -386,7 +386,11 @@
         })
             .then(response => {
                 if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text); });
+                    return response.json().then(err => {
+                        console.error('Server response:', err);
+                        alert('Error: ' + err.message);
+                        throw new Error('Error saving car: ' + err.message);
+                    });
                 }
                 return response.text();
             })
@@ -399,7 +403,6 @@
             })
             .catch(error => {
                 console.error('Error adding car:', error);
-                alert('Failed to add car: ' + error.message);
             });
     }
 

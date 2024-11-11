@@ -149,6 +149,12 @@ public class CarController {
                                                         @RequestParam String categoryName,
                                                         @RequestParam(defaultValue = "Black") String color,
                                                         @RequestParam(required = false) String carNumber) {
+        if (carNumber != null) {
+            if (carRepository.existsById(carNumber)) {
+                throw new CarAlreadyExistsException(carNumber);
+            }
+        }
+
         try {
             String generatedCarNumber = carRepository.addCar(model, productionYear, categoryName, color, carNumber);
             return ResponseEntity.ok("Car added successfully with number: " + generatedCarNumber);
