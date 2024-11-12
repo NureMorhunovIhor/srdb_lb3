@@ -123,12 +123,70 @@
                         <td>
                             <a href="#" class="btn btn-warning" onclick="populateCategoryModal(${category.id}); return false;">Edit</a>
                             <a href="#" class="btn btn-danger" onclick="deleteCategory(${category.id}); return false;">Delete</a>
+                            <button class="btn btn-info" onclick="toggleCars(${category.id}); return false;">Show Cars</button>
+                        </td>
+                    </tr>
+                    <tr id="carRow-${category.id}" style="display: none;">
+                        <td colspan="5">
+                            <div id="carList-${category.id}" class="ms-3"></div>
                         </td>
                     </tr>`;
                     tbody.innerHTML += row;
                 });
             })
             .catch(error => console.error('Error loading categories:', error));
+    }
+
+    function toggleCars(categoryId) {
+        const carRow = document.getElementById(`carRow-${categoryId}`);
+        const carList = document.getElementById(`carList-${categoryId}`);
+
+        if (carRow.style.display === 'none') {
+            // If cars are not yet loaded, fetch and display them in a table
+            if (carList.innerHTML === '') {
+                fetch(`/api/cars/category/${categoryId}`)
+                    .then(response => response.json())
+                    .then(cars => {
+                        if (cars.length > 0) {
+                            // Create table structure for cars
+                            let carTable = `
+                            <table class="table table-bordered table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Car Number</th>
+                                        <th>Model</th>
+                                        <th>Color</th>
+                                        <th>Production Year</th>
+                                        <th>Driver</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                            // Populate table rows with car data
+                            carTable += cars.map(car => `
+                            <tr>
+                                <td>${car.carNumber}</td>
+                                <td>${car.model}</td>
+                                <td>${car.color}</td>
+                                <td>${car.productionYear}</td>
+                                <td>${car.driver ? car.driver.firstName + ' ' + car.driver.lastName : 'No Driver'}</td>
+                            </tr>
+                        `).join('');
+                            carTable += `
+                                </tbody>
+                            </table>
+                        `;
+                            carList.innerHTML = carTable;
+                        } else {
+                            carList.innerHTML = '<p>There are no cars in this category.</p>';
+                        }
+                    })
+                    .catch(error => console.error('Error loading cars:', error));
+            }
+            carRow.style.display = ''; // Show car row
+        } else {
+            carRow.style.display = 'none'; // Hide car row if already open
+        }
     }
 
     function populateCategoryModal(categoryId) {

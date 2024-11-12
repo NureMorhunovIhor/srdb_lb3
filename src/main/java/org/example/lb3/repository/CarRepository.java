@@ -27,4 +27,6 @@ public interface CarRepository extends JpaRepository<Car, String> {
                 @Param("Category_name") String categoryName,
                 @Param("Color") String color,
                 @Param("Car_number") String carNumber);
+
+    List<Car> findByCarCategory_Id(Integer carCategory_id);
 }

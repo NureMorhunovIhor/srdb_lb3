@@ -9,11 +9,13 @@ import org.example.lb3.repository.CarRepository;
 import org.example.lb3.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.example.lb3.exception.CarAlreadyExistsException;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,13 +80,6 @@ public class CarController {
 
     }
 
-
-    @ExceptionHandler(CarAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleCarAlreadyExistsException(CarAlreadyExistsException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("CAR_ALREADY_EXISTS", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
-    }
-
     @DeleteMapping("/{carNumber}")
     public ResponseEntity<Void> deleteCar(@PathVariable String carNumber) {
         if (!carRepository.existsById(carNumber)) {
@@ -144,23 +139,35 @@ public class CarController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addCarUsingProcedure( @RequestParam String model,
-                                                        @RequestParam Integer productionYear,
-                                                        @RequestParam String categoryName,
-                                                        @RequestParam(defaultValue = "Black") String color,
-                                                        @RequestParam(required = false) String carNumber) {
-        if (carNumber != null) {
-            if (carRepository.existsById(carNumber)) {
-                throw new CarAlreadyExistsException(carNumber);
-            }
-        }
-
+    public ResponseEntity<String> addCarUsingProcedure(@RequestParam String model,
+                                                       @RequestParam Integer productionYear,
+                                                       @RequestParam String categoryName,
+                                                       @RequestParam(defaultValue = "Black") String color,
+                                                       @RequestParam(required = false) String carNumber) {
         try {
             String generatedCarNumber = carRepository.addCar(model, productionYear, categoryName, color, carNumber);
             return ResponseEntity.ok("Car added successfully with number: " + generatedCarNumber);
+        } catch (InvalidDataAccessResourceUsageException ex) {
+            Throwable cause = ex.getRootCause();
+            if (cause instanceof SQLException sqlException) {
+                System.out.println("SQL Error Code: " + sqlException.getErrorCode());
+                System.out.println("SQL State: " + sqlException.getSQLState());
+                System.out.println("Error Message: " + sqlException.getMessage());
+
+                if (sqlException.getErrorCode() == 50000) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Car with number already exists.");
+                }
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while adding the car.");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("An error occurred while adding the car.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while adding the car.");
         }
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Car>> getCarsByCategory(@PathVariable Integer categoryId) {
+        List<Car> cars = carRepository.findByCarCategory_Id(categoryId);
+        return ResponseEntity.ok(cars);
     }
 }
